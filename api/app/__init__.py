@@ -1,0 +1,1 @@
+# FastAPI App for Internship Management System

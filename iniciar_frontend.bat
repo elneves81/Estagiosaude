@@ -14,7 +14,7 @@ if not exist "node_modules" (
 
 echo.
 echo [2/3] Verificando se o backend esta rodando...
-powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:8000/health' -TimeoutSec 5 -UseBasicParsing; Write-Host 'Backend OK!' } catch { Write-Host 'AVISO: Backend nao encontrado. Inicie o backend primeiro com iniciar_backend.bat' -ForegroundColor Yellow }"
+powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:8001/health' -TimeoutSec 5 -UseBasicParsing; Write-Host 'Backend OK!' } catch { Write-Host 'AVISO: Backend nao encontrado. Inicie o backend primeiro com iniciar_backend.bat' -ForegroundColor Yellow }"
 
 echo.
 echo [3/3] Iniciando servidor de desenvolvimento...

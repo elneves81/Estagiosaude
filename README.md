@@ -30,8 +30,8 @@ Inicia apenas o frontend em http://localhost:5173
 ## URLs importantes
 
 - **Frontend:** http://localhost:5173
-- **API Backend:** http://localhost:8000
-- **Documentação da API:** http://localhost:8000/docs
+- **API Backend:** http://localhost:8001
+- **Documentação da API:** http://localhost:8001/docs
 
 ## Estrutura do projeto
 

@@ -18,11 +18,11 @@ pip install --quiet fastapi uvicorn sqlalchemy python-jose[cryptography] passlib
 
 echo.
 echo [3/4] Aplicando migracoes do banco de dados...
-powershell -ExecutionPolicy Bypass -File "tools\apply_migration.ps1"
+python tools\apply_migration.py
 
 echo.
 echo [4/4] Iniciando servidor API...
-echo Backend rodando em: http://localhost:8000
-echo Documentacao da API: http://localhost:8000/docs
+echo Backend rodando em: http://localhost:8001
+echo Documentacao da API: http://localhost:8001/docs
 echo.
-python -m uvicorn app.main:app --reload --port 8000
+python -m uvicorn app.main:app --reload --port 8001

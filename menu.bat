@@ -53,15 +53,15 @@ goto menu
 :docs
 cls
 echo Abrindo documentação da API...
-start http://localhost:8000/docs
+start http://localhost:8001/docs
 goto menu
 
 :status
 cls
 echo Verificando status dos serviços...
 echo.
-echo Backend (porta 8000):
-powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:8000/health' -TimeoutSec 3 -UseBasicParsing; Write-Host '✓ Backend ONLINE' -ForegroundColor Green } catch { Write-Host '✗ Backend OFFLINE' -ForegroundColor Red }"
+echo Backend (porta 8001):
+powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:8001/health' -TimeoutSec 3 -UseBasicParsing; Write-Host '✓ Backend ONLINE' -ForegroundColor Green } catch { Write-Host '✗ Backend OFFLINE' -ForegroundColor Red }"
 echo.
 echo Frontend (porta 5173):
 powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:5173' -TimeoutSec 3 -UseBasicParsing; Write-Host '✓ Frontend ONLINE' -ForegroundColor Green } catch { Write-Host '✗ Frontend OFFLINE' -ForegroundColor Red }"
@@ -77,8 +77,8 @@ echo  ║                INFORMAÇÕES DO SISTEMA                ║
 echo  ╠══════════════════════════════════════════════════════╣
 echo  ║                                                      ║
 echo  ║  Frontend: http://localhost:5173                     ║
-echo  ║  Backend:  http://localhost:8000                     ║
-echo  ║  API Docs: http://localhost:8000/docs                ║
+echo  ║  Backend:  http://localhost:8001                     ║
+echo  ║  API Docs: http://localhost:8001/docs                ║
 echo  ║                                                      ║
 echo  ║  CREDENCIAIS DE ADMIN:                               ║
 echo  ║  Email: admin@estagios.local                         ║

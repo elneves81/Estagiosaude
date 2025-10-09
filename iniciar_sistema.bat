@@ -21,8 +21,8 @@ echo ==========================================
 echo   SISTEMA INICIADO!
 echo ==========================================
 echo.
-echo Backend: http://localhost:8000
-echo API Docs: http://localhost:8000/docs
+echo Backend: http://localhost:8001
+echo API Docs: http://localhost:8001/docs
 echo Frontend: http://localhost:5173
 echo.
 echo Credenciais de admin:
