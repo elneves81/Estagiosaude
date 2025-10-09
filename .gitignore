@@ -1,0 +1,52 @@
+# Node
+web/node_modules/
+web/dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build/Cache
+.cache/
+.eslintcache
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Env
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual envs
+venv/
+.venv/
+api/venv/
+api/.venv/
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+
+# SQLite/DB files
+*.db
+*.sqlite
+*.sqlite3
+api/*.db
+api/*.sqlite
+api/*.sqlite3
+
+# Misc
+*.pid
