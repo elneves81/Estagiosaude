@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date, time
 
 # Schemas de base
 class UsuarioBase(BaseModel):
@@ -87,12 +87,34 @@ class Supervisor(SupervisorBase):
     class Config:
         from_attributes = True
 
+# Schemas de Território
+class TerritorioBase(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+
+class TerritorioCreate(TerritorioBase):
+    pass
+
+class Territorio(TerritorioBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
 # Schemas de Estágio
 class EstagioBase(BaseModel):
     nome: str
     email: str
     telefone: Optional[str] = None
     periodo: Optional[str] = None
+    data_inicio: Optional[date] = None
+    data_fim: Optional[date] = None
+    horario_inicio: Optional[time] = None
+    horario_fim: Optional[time] = None
+    carga_horaria: Optional[float] = None
+    status: Optional[str] = "ativo"
+    valor_total: Optional[float] = None
+    territorio_id: Optional[int] = None
     supervisor_id: Optional[int] = None
     instituicao_id: Optional[int] = None
     curso_id: Optional[int] = None
@@ -112,6 +134,7 @@ class Estagio(EstagioBase):
     instituicao: Optional[Instituicao] = None
     curso: Optional[Curso] = None
     unidade: Optional[Unidade] = None
+    territorio: Optional[Territorio] = None
 
     class Config:
         from_attributes = True

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}Sistema de Estágios{% endblock %}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <nav class="topbar">
+    <div class="logo">Sistema de Estágios</div>
+    <ul class="menu">
+      {% if user %}
+      <li><a href="/web/dashboard">Dashboard</a></li>
+      <li><a href="/web/estagios">Estágios</a></li>
+      <li><a href="/web/supervisores">Supervisores</a></li>
+      <li><a href="/web/catalogos">Catálogos</a></li>
+      <li><a href="/web/relatorios">Relatórios</a></li>
+      <li><a href="/web/logout" class="danger">Sair</a></li>
+      {% else %}
+      <li><a href="/web/login">Login</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+  <main class="container">
+    {% if error %}
+      <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    &copy; {{ year }} - Sistema de Estágios - 
+    <span class="hubi-software">
+      <span class="hubi-orange">HUBI</span>
+      <span class="hubi-green">SOFTWARE</span>
+    </span>
+  </footer>
+</body>
+</html>

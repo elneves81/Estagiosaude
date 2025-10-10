@@ -4,31 +4,24 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from . import crud, models
+from .core.config import get_settings
 
 # Configurações de segurança
-SECRET_KEY = "sistema-estagios-secret-key-2024"
+SECRET_KEY = get_settings().SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 horas
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password, hashed_password):
-    try:
-        return pwd_context.verify(plain_password, hashed_password)
-    except Exception:
-        # Fallback para hash simples se bcrypt falhar
-        import hashlib
-        return hashlib.sha256(plain_password.encode()).hexdigest() == hashed_password
+    return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
-    try:
-        return pwd_context.hash(password)
-    except Exception:
-        # Fallback para hash simples se bcrypt falhar
-        import hashlib
-        return hashlib.sha256(password.encode()).hexdigest()
+    return pwd_context.hash(password)
 
 def authenticate_user(db: Session, email: str, password: str):
+    if email:
+        email = email.strip().lower()
     user = crud.get_user_by_email(db, email)
     if not user:
         return False

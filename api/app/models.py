@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, Text
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Date, Time, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -23,6 +23,16 @@ class Usuario(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
 
     supervisores = relationship("Supervisor", back_populates="usuario")
+
+class Territorio(Base):
+    __tablename__ = "territorios"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, nullable=False)
+    descricao = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    estagios = relationship("Estagio", back_populates="territorio")
 
 class Instituicao(Base):
     __tablename__ = "instituicoes"
@@ -72,11 +82,43 @@ class Estagio(Base):
     nome = Column(String, nullable=False)
     email = Column(String, nullable=False)
     telefone = Column(String)
+    
+    # Datas e horários
+    data_inicio = Column(Date)
+    data_fim = Column(Date)
+    horario_inicio = Column(Time)
+    horario_fim = Column(Time)
+    
+    # Informações acadêmicas
     periodo = Column(String)
+    disciplina = Column(String)
+    nivel = Column(String)
+    carga_horaria = Column(Integer)
+    
+    # Quantidades e observações
+    num_estagiarios = Column(Integer)
+    observacoes = Column(Text)
+    
+    # Relacionamentos
     supervisor_id = Column(Integer, ForeignKey("supervisores.id"))
     instituicao_id = Column(Integer, ForeignKey("instituicoes.id"))
     curso_id = Column(Integer, ForeignKey("cursos.id"))
     unidade_id = Column(Integer, ForeignKey("unidades.id"))
+    territorio_id = Column(Integer, ForeignKey("territorios.id"))
+    
+    # Status e controle
+    status = Column(String, default="ativo")  # ativo, concluido, cancelado
+    valor_total = Column(Float)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relacionamentos
+    supervisor = relationship("Supervisor", back_populates="estagios")
+    instituicao = relationship("Instituicao", back_populates="estagios")
+    curso = relationship("Curso", back_populates="estagios")
+    unidade = relationship("Unidade", back_populates="estagios")
+    territorio = relationship("Territorio", back_populates="estagios")
     disciplina = Column(Text)
     nivel = Column(String)
     num_estagiarios = Column(Integer)

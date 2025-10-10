@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Login - Sistema de Estágios{% endblock %}
+{% block content %}
+<div class="login-wrapper">
+  <div class="brand-panel">
+    <div class="brand-logo">🩺</div>
+    <h1>Sistema de Estágios</h1>
+    <p class="tagline">Gestão simples e centralizada de estágios, supervisores e instituições.</p>
+    <ul class="highlights">
+      <li>✔ Controle de Supervisores</li>
+      <li>✔ Registro de Estágios</li>
+      <li>✔ Relatório Anexo II</li>
+      <li>✔ Importação via planilha</li>
+    </ul>
+    <p class="mini-info">Use seu e-mail institucional para acessar.<br> Precisa de ajuda? Contate o administrador.</p>
+  </div>
+  <div class="login-panel">
+    <h2>Bem-vindo(a)</h2>
+    <p class="subtitle">Entre para continuar</p>
+    {% if error %}
+      <div class="alert alert-error" style="margin-bottom:1rem;">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/web/login" class="login-form" autocomplete="on">
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" name="email" placeholder="seu.email@exemplo.com" required autofocus />
+      </div>
+      <div class="field">
+        <label for="password">Senha</label>
+        <input id="password" type="password" name="password" placeholder="••••••••" required />
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn-primary btn-full">Entrar</button>
+      </div>
+    </form>
+    <div class="demo-box">
+      <strong>Usuário padrão</strong><br>
+      admin@estagios.local<br>
+      <code>admin123</code>
+    </div>
+    <div class="foot-note">
+      © {{ year }} Sistema de Estágios • 
+      <span class="hubi-software">
+        <span class="hubi-orange">HUBI</span>
+        <span class="hubi-green">SOFTWARE</span>
+      </span>
+      • Todos os direitos reservados
+    </div>
+  </div>
+</div>
+{% endblock %}
