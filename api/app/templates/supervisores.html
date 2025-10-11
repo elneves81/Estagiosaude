@@ -17,6 +17,9 @@
     <label>Especialidade
       <input type="text" name="especialidade" />
     </label>
+    <label>Número do Conselho
+      <input type="text" name="numero_conselho" placeholder="CRM/CRO/COREN..." />
+    </label>
     <div class="col-span-4">
       <button type="submit" class="btn-primary">Salvar</button>
     </div>
@@ -27,7 +30,7 @@
   <table class="table">
     <thead>
       <tr>
-        <th>ID</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Especialidade</th><th>Ações</th>
+  <th>ID</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Especialidade</th><th>Nº Conselho</th><th>Ações</th>
       </tr>
     </thead>
     <tbody>
@@ -38,6 +41,7 @@
         <td>{{ s.email }}</td>
         <td>{{ s.telefone or '' }}</td>
         <td>{{ s.especialidade or '' }}</td>
+  <td>{{ s.numero_conselho or '' }}</td>
         <td>
           <form method="post" action="/web/supervisores/delete/{{ s.id }}" onsubmit="return confirm('Excluir supervisor {{ s.nome }}?');" style="display:inline">
             <button type="submit" class="btn-small" style="background:#dc2626">Excluir</button>

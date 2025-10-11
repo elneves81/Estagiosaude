@@ -76,6 +76,7 @@ class SupervisorBase(BaseModel):
     email: str
     telefone: Optional[str] = None
     especialidade: Optional[str] = None
+    numero_conselho: Optional[str] = None
 
 class SupervisorCreate(SupervisorBase):
     pass
@@ -122,6 +123,8 @@ class EstagioBase(BaseModel):
     disciplina: Optional[str] = None
     nivel: Optional[str] = None
     num_estagiarios: Optional[int] = None
+    quantidade_grupos: Optional[int] = 1
+    dias_semana: Optional[str] = None
     observacoes: Optional[str] = None
 
 class EstagioCreate(EstagioBase):

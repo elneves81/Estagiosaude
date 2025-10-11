@@ -4,6 +4,11 @@
 <h1>Estágios</h1>
 <section class="card">
   <h2>Novo Estágio</h2>
+  {% if import_message %}
+    <div style="margin-bottom:10px;padding:8px 12px;border-radius:6px;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;">
+      {{ import_message }}
+    </div>
+  {% endif %}
   <form method="post" action="/web/estagios" class="form-grid cols-4">
     <label>Nome
       <input type="text" name="nome" required />
@@ -99,6 +104,12 @@
     <label>Nº Estagiários
       <input type="number" name="num_estagiarios" />
     </label>
+    <label>Quantidade de Grupos
+      <input type="number" name="quantidade_grupos" min="1" value="1" />
+    </label>
+    <label class="col-span-4">Dias da Semana
+      <input type="text" name="dias_semana" placeholder="Ex: Segunda, Quarta, Sexta" />
+    </label>
     <label class="col-span-4">Observações
       <textarea name="observacoes" rows="3"></textarea>
     </label>
@@ -116,7 +127,7 @@
   <table class="table">
     <thead>
       <tr>
-        <th>ID</th><th>Nome</th><th>Email</th><th>Período</th><th>Status</th><th>Supervisor</th><th>Instituição</th><th>Território</th><th>Ações</th>
+  <th>ID</th><th>Nome</th><th>Email</th><th>Período</th><th>Status</th><th>Supervisor</th><th>Instituição</th><th>Grupos</th><th>Dias</th><th>Ações</th>
       </tr>
     </thead>
     <tbody>
@@ -138,10 +149,11 @@
           </span>
         </td>
         <td>{{ e.supervisor.nome if e.supervisor else '' }}</td>
-        <td>{{ e.instituicao.nome if e.instituicao else '' }}</td>
-        <td>{{ e.territorio.nome if e.territorio else '' }}</td>
+  <td>{{ e.instituicao.nome if e.instituicao else '' }}</td>
+  <td>{{ e.quantidade_grupos or '-' }}</td>
+  <td>{{ e.dias_semana or '-' }}</td>
         <td>
-          <a class="btn-small" style="background:#2563eb" href="/relatorios/anexo2/{{ e.id }}?format=html" target="_blank">Relatório</a>
+          <a class="btn-small" style="background:#2563eb" href="/web/relatorios/anexo2/{{ e.id }}?format=html" target="_blank">Relatório</a>
           <form method="post" action="/web/estagios/delete/{{ e.id }}" style="display:inline" onsubmit="return confirm('Excluir estágio {{ e.nome }}?');">
             <button class="btn-small" style="background:#dc2626" type="submit">Excluir</button>
           </form>

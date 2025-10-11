@@ -4,9 +4,13 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from datetime import datetime
 from typing import Optional
+import os
+import uuid
 
 from ..db import SessionLocal
 from .. import crud, schemas, auth, models
+from ..utils_pdf import render_anexo2_html, render_anexo2
+import importlib.util as _importlib_util
 
 router = APIRouter(tags=["web"])
 COOKIE_TOKEN_NAME = "token"
@@ -92,12 +96,26 @@ async def web_supervisores(request: Request, db: Session = Depends(get_db)):
     return request.app.state.templates.TemplateResponse("supervisores.html", {"request": request, "user": user, "supervisores": supervisores, "error": None, "year": datetime.utcnow().year})
 
 @router.post("/web/supervisores")
-async def web_supervisores_create(request: Request, nome: str = Form(...), email: str = Form(...), telefone: str = Form(""), especialidade: str = Form(""), db: Session = Depends(get_db)):
+async def web_supervisores_create(
+    request: Request,
+    nome: str = Form(...),
+    email: str = Form(...),
+    telefone: str = Form(""),
+    especialidade: str = Form(""),
+    numero_conselho: str = Form("") ,
+    db: Session = Depends(get_db)
+):
     user = get_current_user_from_cookie(request, db)
     if not user:
         return RedirectResponse("/web/login")
     try:
-        crud.create_supervisor(db, schemas.SupervisorCreate(nome=nome, email=email, telefone=telefone, especialidade=especialidade))
+        crud.create_supervisor(db, schemas.SupervisorCreate(
+            nome=nome,
+            email=email,
+            telefone=telefone,
+            especialidade=especialidade,
+            numero_conselho=numero_conselho or None
+        ))
     except Exception:
         pass
     return RedirectResponse("/web/supervisores", status_code=302)
@@ -121,6 +139,12 @@ async def web_estagios(request: Request, db: Session = Depends(get_db)):
     cursos = crud.get_cursos(db)
     unidades = crud.get_unidades(db)
     territorios = db.query(models.Territorio).all()
+    # Mensagem de importação (se houver)
+    imported = request.query_params.get("imported")
+    msg = None
+    if imported:
+        msg = f"Importação concluída: {imported} registro(s)." if imported.isdigit() else "Importação concluída."
+
     return request.app.state.templates.TemplateResponse("estagios.html", {
         "request": request, 
         "user": user, 
@@ -130,37 +154,64 @@ async def web_estagios(request: Request, db: Session = Depends(get_db)):
         "cursos": cursos, 
         "unidades": unidades, 
         "territorios": territorios,
+        "import_message": msg,
         "error": None, 
         "year": datetime.utcnow().year
     })
 
 @router.post("/web/estagios")
-async def web_estagios_create(request: Request,
-                              nome: str = Form(...),
-                              email: str = Form(...),
-                              telefone: str = Form(""),
-                              periodo: str = Form(""),
-                              supervisor_id: Optional[int] = Form(None),
-                              instituicao_id: Optional[int] = Form(None),
-                              curso_id: Optional[int] = Form(None),
-                              unidade_id: Optional[int] = Form(None),
-                              disciplina: str = Form(""),
-                              nivel: str = Form(""),
-                              num_estagiarios: Optional[int] = Form(None),
-                              observacoes: str = Form(""),
-                              db: Session = Depends(get_db)):
+async def web_estagios_create(
+    request: Request,
+    nome: str = Form(...),
+    email: str = Form(...),
+    telefone: str = Form(""),
+    periodo: str = Form(""),
+    supervisor_id: Optional[int] = Form(None),
+    instituicao_id: Optional[int] = Form(None),
+    curso_id: Optional[int] = Form(None),
+    unidade_id: Optional[int] = Form(None),
+    disciplina: str = Form(""),
+    nivel: str = Form(""),
+    num_estagiarios: Optional[int] = Form(None),
+    quantidade_grupos: Optional[int] = Form(None),
+    dias_semana: str = Form(""),
+    data_inicio: Optional[str] = Form(None),
+    data_fim: Optional[str] = Form(None),
+    horario_inicio: Optional[str] = Form(None),
+    horario_fim: Optional[str] = Form(None),
+    carga_horaria: Optional[float] = Form(None),
+    status: str = Form("ativo"),
+    valor_total: Optional[float] = Form(None),
+    territorio_id: Optional[int] = Form(None),
+    observacoes: str = Form(""),
+    db: Session = Depends(get_db)
+):
     user = get_current_user_from_cookie(request, db)
     if not user:
         return RedirectResponse("/web/login")
     try:
         estagio_obj = schemas.EstagioCreate(
-            nome=nome, email=email, telefone=telefone, periodo=periodo,
-            supervisor_id=supervisor_id if supervisor_id else None,
-            instituicao_id=instituicao_id if instituicao_id else None,
-            curso_id=curso_id if curso_id else None,
-            unidade_id=unidade_id if unidade_id else None,
-            disciplina=disciplina, nivel=nivel,
-            num_estagiarios=num_estagiarios if num_estagiarios else None,
+            nome=nome,
+            email=email,
+            telefone=telefone,
+            periodo=periodo,
+            supervisor_id=supervisor_id or None,
+            instituicao_id=instituicao_id or None,
+            curso_id=curso_id or None,
+            unidade_id=unidade_id or None,
+            territorio_id=territorio_id or None,
+            disciplina=disciplina or None,
+            nivel=nivel or None,
+            num_estagiarios=num_estagiarios or None,
+            quantidade_grupos=quantidade_grupos or None,
+            dias_semana=dias_semana or None,
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            horario_inicio=horario_inicio,
+            horario_fim=horario_fim,
+            carga_horaria=carga_horaria,
+            status=status or "ativo",
+            valor_total=valor_total,
             observacoes=observacoes
         )
         crud.create_estagio(db, estagio_obj)
@@ -197,6 +248,61 @@ async def web_import_estagios(request: Request, file: UploadFile = File(...), db
                     ))
                     imported += 1
         elif file.filename.endswith('.xlsx'):
+            # Primeiro, tentar usar o importador específico do modelo da Faculdade Guarapuava
+            try:
+                # Persistir o upload temporariamente
+                routers_dir = os.path.dirname(__file__)
+                app_dir = os.path.dirname(routers_dir)
+                api_dir = os.path.dirname(app_dir)
+                uploads_dir = os.path.join(api_dir, 'uploads')
+                os.makedirs(uploads_dir, exist_ok=True)
+                temp_path = os.path.join(uploads_dir, f"upload_{uuid.uuid4().hex}.xlsx")
+                with open(temp_path, 'wb') as f:
+                    f.write(content)
+
+                try:
+                    # Tenta importar como pacote (se 'tools' for pacote)
+                    from tools.importar_excel import importar_excel  # type: ignore
+                    sucesso = importar_excel(temp_path)
+                    if sucesso:
+                        # Importação completa feita pelo script dedicado
+                        # Remover arquivo temporário e redirecionar
+                        try:
+                            os.remove(temp_path)
+                        except OSError:
+                            pass
+                        return RedirectResponse("/web/estagios?imported=ok", status_code=302)
+                except Exception:
+                    # Fallback: carregar módulo diretamente via caminho (tools não é pacote)
+                    try:
+                        importer_path = os.path.join(api_dir, 'tools', 'importar_excel.py')
+                        spec = _importlib_util.spec_from_file_location("importar_excel", importer_path)
+                        if spec and spec.loader:
+                            mod = _importlib_util.module_from_spec(spec)
+                            spec.loader.exec_module(mod)  # type: ignore
+                            if hasattr(mod, 'importar_excel'):
+                                sucesso = mod.importar_excel(temp_path)  # type: ignore
+                                if sucesso:
+                                    try:
+                                        os.remove(temp_path)
+                                    except OSError:
+                                        pass
+                                    return RedirectResponse("/web/estagios?imported=ok", status_code=302)
+                    except Exception:
+                        # Segue para import genérico
+                        pass
+                finally:
+                    # Se não retornamos ainda, tentaremos o import genérico; manteremos o arquivo para debug opcional
+                    try:
+                        os.remove(temp_path)
+                    except OSError:
+                        pass
+
+            except Exception:
+                # Qualquer falha na preparação cai para o import genérico
+                pass
+
+            # Fallback: importação genérica por cabeçalho (nome,email,...)
             try:
                 import openpyxl, io
                 wb = openpyxl.load_workbook(io.BytesIO(content))
@@ -213,7 +319,7 @@ async def web_import_estagios(request: Request, file: UploadFile = File(...), db
                 pass
     except Exception:
         pass
-    return RedirectResponse("/web/estagios", status_code=302)
+    return RedirectResponse(f"/web/estagios?imported={imported}", status_code=302)
 
 @router.get("/web/catalogos", response_class=HTMLResponse)
 async def web_catalogos(request: Request, db: Session = Depends(get_db)):
@@ -358,6 +464,27 @@ async def web_relatorios(request: Request, db: Session = Depends(get_db)):
         "campos_disponiveis": campos_disponiveis,
         "year": datetime.utcnow().year
     })
+
+@router.get("/web/relatorios/anexo2/{estagio_id}")
+async def web_relatorio_anexo2(request: Request, estagio_id: int, format: str = "html", db: Session = Depends(get_db)):
+    """Gera o Anexo II (HTML ou PDF) autenticando via cookie."""
+    user = get_current_user_from_cookie(request, db)
+    if not user:
+        return RedirectResponse("/web/login")
+    estagio = crud.get_estagio_by_id(db, estagio_id)
+    if not estagio:
+        raise HTTPException(status_code=404, detail="Estágio não encontrado")
+    if format.lower() == "pdf":
+        try:
+            pdf_bytes = render_anexo2(estagio)
+            return Response(content=pdf_bytes, media_type="application/pdf")
+        except Exception:
+            # Fallback: retorna HTML se PDF não estiver disponível
+            html = render_anexo2_html(estagio)
+            return HTMLResponse(content=html)
+    else:
+        html = render_anexo2_html(estagio)
+        return HTMLResponse(content=html)
 
 @router.post("/web/relatorios/gerar")
 async def web_gerar_relatorio(

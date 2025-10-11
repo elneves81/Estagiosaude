@@ -12,7 +12,7 @@ def _split_csv(value: str) -> list[str]:
 class Settings(BaseSettings):
     APP_NAME: str = "Sistema de Estágios"
     VERSION: str = "1.0.0"
-    API_V1_PREFIX: str = "/api"
+    API_V1_PREFIX: str = "/api/v1"
     SECRET_KEY: str = "change-me"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
     # Aceita str (CSV/JSON) ou lista; faremos normalização no validador

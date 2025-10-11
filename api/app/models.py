@@ -1,12 +1,7 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Date, Time, Float
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Date, Time, Float
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import relationship
 from datetime import datetime
-
-DATABASE_URL = "sqlite:///./estagios.db"
-
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
@@ -69,6 +64,7 @@ class Supervisor(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     telefone = Column(String)
     especialidade = Column(String)
+    numero_conselho = Column(String)  # Número do conselho profissional (CRM, CRO, COREN, etc.)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -91,12 +87,14 @@ class Estagio(Base):
     
     # Informações acadêmicas
     periodo = Column(String)
-    disciplina = Column(String)
+    disciplina = Column(Text)
     nivel = Column(String)
     carga_horaria = Column(Integer)
     
     # Quantidades e observações
     num_estagiarios = Column(Integer)
+    quantidade_grupos = Column(Integer, default=1)  # Número de grupos/turmas
+    dias_semana = Column(Text)  # Dias da semana do estágio (ex: "Segunda, Quarta, Sexta")
     observacoes = Column(Text)
     
     # Relacionamentos
@@ -119,13 +117,3 @@ class Estagio(Base):
     curso = relationship("Curso", back_populates="estagios")
     unidade = relationship("Unidade", back_populates="estagios")
     territorio = relationship("Territorio", back_populates="estagios")
-    disciplina = Column(Text)
-    nivel = Column(String)
-    num_estagiarios = Column(Integer)
-    observacoes = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    supervisor = relationship("Supervisor", back_populates="estagios")
-    instituicao = relationship("Instituicao", back_populates="estagios")
-    curso = relationship("Curso", back_populates="estagios")
-    unidade = relationship("Unidade", back_populates="estagios")
