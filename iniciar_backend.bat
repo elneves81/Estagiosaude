@@ -4,7 +4,7 @@ echo ==========================================
 echo   SISTEMA DE ESTAGIARIOS - BACKEND (OTIMIZADO)
 echo ==========================================
 echo.
-echo Uso: iniciar_backend.bat [noreload|stat|reset]
+echo Uso: iniciar_backend.bat [noreload^|stat^|reset]
 echo.
 
 REM Ir para pasta api
