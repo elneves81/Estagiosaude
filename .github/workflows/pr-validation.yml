@@ -1,0 +1,105 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate-pr:
+    name: Validate Pull Request
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check PR title
+        run: |
+          echo "Checking PR title..."
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          
+          if [ -z "$PR_TITLE" ]; then
+            echo "❌ Error: PR title is empty"
+            exit 1
+          fi
+          
+          # Check if PR title is descriptive (at least 10 characters)
+          if [ ${#PR_TITLE} -lt 10 ]; then
+            echo "⚠️  Warning: PR title is too short. Please provide a more descriptive title."
+          fi
+          
+          echo "✓ PR title: $PR_TITLE"
+      
+      - name: Check for changes
+        run: |
+          echo "Checking for file changes..."
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "⚠️  Warning: No files were changed in this PR"
+          else
+            echo "✓ Files changed:"
+            echo "$CHANGED_FILES"
+          fi
+      
+      - name: Check for merge commits
+        run: |
+          echo "Checking for merge commits..."
+          MERGE_COMMITS=$(git log origin/${{ github.base_ref }}..HEAD --merges --oneline)
+          
+          if [ -n "$MERGE_COMMITS" ]; then
+            echo "⚠️  Warning: Merge commits found. Consider rebasing instead:"
+            echo "$MERGE_COMMITS"
+          else
+            echo "✓ No merge commits found"
+          fi
+      
+      - name: Check commit messages
+        run: |
+          echo "Checking commit messages..."
+          EXIT_CODE=0
+          
+          for commit in $(git rev-list origin/${{ github.base_ref }}..HEAD); do
+            MESSAGE=$(git log --format=%B -n 1 $commit | head -1)
+            
+            if [ ${#MESSAGE} -lt 10 ]; then
+              echo "⚠️  Warning: Commit message too short: $MESSAGE"
+            fi
+            
+            # Check for WIP or TODO in commit messages
+            if echo "$MESSAGE" | grep -qi "wip\|todo\|fixme"; then
+              echo "⚠️  Warning: Found WIP/TODO marker in commit: $MESSAGE"
+            fi
+          done
+          
+          echo "✓ Commit message check completed"
+      
+      - name: Check for conflict markers
+        run: |
+          echo "Checking for unresolved conflict markers..."
+          EXIT_CODE=0
+          CONFLICTS=$(grep -r "<<<<<<< \|>>>>>>> \|=======" . --exclude-dir=.git --exclude-dir=node_modules 2>/dev/null || true)
+          
+          if [ -n "$CONFLICTS" ]; then
+            echo "❌ Error: Unresolved merge conflict markers found:"
+            echo "$CONFLICTS"
+            exit 1
+          else
+            echo "✓ No conflict markers found"
+          fi
+      
+      - name: PR Validation Summary
+        if: always()
+        run: |
+          echo ""
+          echo "================================"
+          echo "PR Validation Summary"
+          echo "================================"
+          echo "Pull Request: ${{ github.event.pull_request.title }}"
+          echo "Branch: ${{ github.head_ref }} → ${{ github.base_ref }}"
+          echo "Author: ${{ github.event.pull_request.user.login }}"
+          echo ""
+          echo "All validation checks completed."
+          echo "Please review any warnings above before merging."

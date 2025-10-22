@@ -1,0 +1,153 @@
+name: Check for Errors After Push
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  check-errors:
+    name: Verify Code Quality and Errors
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check for syntax errors in YAML files
+        run: |
+          echo "Checking YAML files for syntax errors..."
+          EXIT_CODE=0
+          for file in $(find . -name "*.yml" -o -name "*.yaml" | grep -v node_modules); do
+            if [ -f "$file" ]; then
+              echo "Checking $file..."
+              if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+                echo "❌ Error: Syntax error in $file"
+                EXIT_CODE=1
+              else
+                echo "✓ $file is valid"
+              fi
+            fi
+          done
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✓ All YAML files are valid"
+          fi
+          exit $EXIT_CODE
+      
+      - name: Check for syntax errors in JSON files
+        run: |
+          echo "Checking JSON files for syntax errors..."
+          EXIT_CODE=0
+          for file in $(find . -name "*.json" | grep -v node_modules); do
+            if [ -f "$file" ]; then
+              echo "Checking $file..."
+              if ! python3 -c "import json; json.load(open('$file'))" 2>/dev/null; then
+                echo "❌ Error: Syntax error in $file"
+                EXIT_CODE=1
+              else
+                echo "✓ $file is valid"
+              fi
+            fi
+          done
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✓ All JSON files are valid"
+          fi
+          exit $EXIT_CODE
+      
+      - name: Check for trailing whitespace
+        run: |
+          echo "Checking for trailing whitespace..."
+          EXIT_CODE=0
+          FILES_WITH_WHITESPACE=$(find . -type f \( -name "*.py" -o -name "*.js" -o -name "*.java" -o -name "*.html" -o -name "*.css" -o -name "*.md" \) -not -path "*/node_modules/*" -not -path "*/.git/*" -exec grep -l '[[:space:]]$' {} \; 2>/dev/null || true)
+          if [ -n "$FILES_WITH_WHITESPACE" ]; then
+            echo "⚠️  Warning: The following files have trailing whitespace:"
+            echo "$FILES_WITH_WHITESPACE"
+            echo "Consider removing trailing whitespace for better code quality."
+          else
+            echo "✓ No trailing whitespace found"
+          fi
+      
+      - name: Check for large files
+        run: |
+          echo "Checking for large files (>10MB)..."
+          EXIT_CODE=0
+          LARGE_FILES=$(find . -type f -size +10M -not -path "*/.git/*" 2>/dev/null || true)
+          if [ -n "$LARGE_FILES" ]; then
+            echo "⚠️  Warning: The following large files were found:"
+            echo "$LARGE_FILES"
+            echo "Consider using Git LFS for large files."
+          else
+            echo "✓ No large files found"
+          fi
+      
+      - name: Check for secrets or sensitive data
+        run: |
+          echo "Checking for potential secrets or sensitive data..."
+          EXIT_CODE=0
+          PATTERNS=(
+            "password\s*=\s*['\"][^'\"]+['\"]"
+            "api_key\s*=\s*['\"][^'\"]+['\"]"
+            "secret\s*=\s*['\"][^'\"]+['\"]"
+            "token\s*=\s*['\"][^'\"]+['\"]"
+            "private_key"
+            "aws_access_key"
+            "AKIA[0-9A-Z]{16}"
+          )
+          
+          for pattern in "${PATTERNS[@]}"; do
+            MATCHES=$(grep -r -i -E "$pattern" . --exclude-dir=.git --exclude-dir=node_modules --exclude="*.yml" --exclude="*.yaml" 2>/dev/null || true)
+            if [ -n "$MATCHES" ]; then
+              echo "⚠️  Warning: Potential secret found matching pattern: $pattern"
+              echo "$MATCHES"
+              EXIT_CODE=1
+            fi
+          done
+          
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✓ No obvious secrets detected"
+          else
+            echo "❌ Potential secrets detected - please review and remove them"
+          fi
+          exit $EXIT_CODE
+      
+      - name: Verify README exists
+        run: |
+          echo "Checking for README file..."
+          if [ ! -f "README.md" ]; then
+            echo "⚠️  Warning: README.md not found"
+          else
+            echo "✓ README.md exists"
+          fi
+      
+      - name: Check file encodings
+        run: |
+          echo "Checking for non-UTF-8 encoded files..."
+          EXIT_CODE=0
+          for file in $(find . -type f \( -name "*.py" -o -name "*.js" -o -name "*.java" -o -name "*.html" -o -name "*.css" -o -name "*.md" \) -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null || true); do
+            if [ -f "$file" ]; then
+              if ! file "$file" | grep -q "UTF-8"; then
+                echo "⚠️  Warning: $file might not be UTF-8 encoded"
+              fi
+            fi
+          done
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✓ File encoding check completed"
+          fi
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "================================"
+          echo "Error Check Summary"
+          echo "================================"
+          echo "All automated checks have completed."
+          echo "Please review any warnings or errors above."

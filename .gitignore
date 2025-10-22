@@ -1,0 +1,105 @@
+# Arquivos do Sistema Operacional
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# IDEs e Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Logs e Arquivos Temporários
+*.log
+*.tmp
+*.temp
+logs/
+temp/
+tmp/
+
+# Dependências
+node_modules/
+bower_components/
+vendor/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ambientes Virtuais
+venv/
+env/
+ENV/
+.venv
+
+# Builds e Distribuições
+dist/
+build/
+*.egg-info/
+target/
+out/
+bin/
+obj/
+
+# Arquivos de Configuração com Dados Sensíveis
+.env
+.env.local
+.env.*.local
+secrets.yml
+secrets.yaml
+*secret*
+*password*
+*credentials*
+
+# Arquivos de Cache
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# Arquivos de Sistema de Controle de Versão
+.svn/
+.hg/
+
+# Arquivos de Banco de Dados Local
+*.sqlite
+*.sqlite3
+*.db
+
+# Arquivos Compilados
+*.class
+*.dll
+*.exe
+*.o
+*.so
+*.dylib
+*.jar
+
+# Arquivos de Backup
+*.backup
+*.bak
+*.old
+
+# Arquivos de Certificados e Chaves
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx

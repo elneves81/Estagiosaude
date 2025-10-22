@@ -1,0 +1,57 @@
+# Configuração do Pre-commit para verificação de erros
+# Para instalar: pip install pre-commit
+# Para ativar: pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Verifica sintaxe de arquivos YAML
+      - id: check-yaml
+        name: Verificar sintaxe YAML
+      
+      # Verifica sintaxe de arquivos JSON
+      - id: check-json
+        name: Verificar sintaxe JSON
+      
+      # Verifica sintaxe de arquivos TOML
+      - id: check-toml
+        name: Verificar sintaxe TOML
+      
+      # Verifica sintaxe de arquivos XML
+      - id: check-xml
+        name: Verificar sintaxe XML
+      
+      # Verifica se arquivos grandes foram adicionados acidentalmente
+      - id: check-added-large-files
+        name: Verificar arquivos grandes
+        args: ['--maxkb=10240']  # 10MB
+      
+      # Verifica se há merge conflicts não resolvidos
+      - id: check-merge-conflict
+        name: Verificar conflitos de merge
+      
+      # Verifica se há chaves privadas
+      - id: detect-private-key
+        name: Detectar chaves privadas
+      
+      # Remove espaços em branco no final das linhas
+      - id: trailing-whitespace
+        name: Remover espaços em branco finais
+      
+      # Garante que arquivos terminam com uma nova linha
+      - id: end-of-file-fixer
+        name: Corrigir final de arquivo
+      
+      # Verifica se há arquivos que seriam commitados diretamente para branches protegidas
+      - id: no-commit-to-branch
+        name: Prevenir commit direto em branches principais
+        args: ['--branch', 'main', '--branch', 'master', '--branch', 'develop']
+      
+      # Verifica sintaxe de Python
+      - id: check-ast
+        name: Verificar sintaxe Python
+      
+      # Verifica se há imports de debug
+      - id: debug-statements
+        name: Verificar statements de debug
