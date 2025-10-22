@@ -1,5 +1,8 @@
 # Estagiosaude
 
+[![Check for Errors After Push](https://github.com/elneves81/Estagiosaude/workflows/Check%20for%20Errors%20After%20Push/badge.svg)](https://github.com/elneves81/Estagiosaude/actions/workflows/check-errors.yml)
+[![Pull Request Validation](https://github.com/elneves81/Estagiosaude/workflows/Pull%20Request%20Validation/badge.svg)](https://github.com/elneves81/Estagiosaude/actions/workflows/pr-validation.yml)
+
 Sistema de gestão de estágios em saúde.
 
 ## Verificação Automática de Erros
