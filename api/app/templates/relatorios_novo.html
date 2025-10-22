@@ -1,0 +1,975 @@
+{% extends "base.html" %}
+{% block title %}Relatórios Dinâmicos - Sistema de Estágios{% endblock %}
+
+{% block content %}
+<div class="relatorios-fullscreen">
+  <!-- Barra de Ferramentas Fixa -->
+  <div class="toolbar-fixed">
+    <div class="toolbar-left">
+      <h1>📊 Relatórios Dinâmicos</h1>
+      <div class="toolbar-stats" id="toolbarStats">
+        <span class="stat-item" id="statCampos">0 campos</span>
+        <span class="stat-item" id="statFiltros">0 filtros</span>
+        <span class="stat-item" id="statModo">Simples</span>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn-toolbar" onclick="toggleSidebar()" id="btnSidebar">
+        <i>📋</i> Campos
+      </button>
+      <button class="btn-toolbar" onclick="toggleFiltros()" id="btnFiltros">
+        <i>🔍</i> Filtros
+      </button>
+      <button class="btn-toolbar" onclick="alternarModo()" id="btnModo">
+        <i>🧮</i> Modo
+      </button>
+      <button class="btn-toolbar danger" onclick="limparTudo()">
+        <i>🗑️</i> Limpar
+      </button>
+      <button class="btn-toolbar primary" onclick="gerarRelatorio()" id="btnGerar" disabled>
+        <i>📊</i> Gerar
+      </button>
+    </div>
+  </div>
+
+  <!-- Layout Principal Flexível -->
+  <div class="main-layout">
+    <!-- Sidebar Retrátil -->
+    <div class="sidebar-retratil" id="sidebarCampos">
+      <div class="sidebar-header">
+        <h3>🧩 Campos Disponíveis</h3>
+        <button class="btn-close-sidebar" onclick="toggleSidebar()">✕</button>
+      </div>
+      
+      <div class="campos-container">
+        <!-- Busca de Campos -->
+        <div class="campo-search">
+          <input type="text" placeholder="🔍 Buscar campo..." id="campoBusca" onkeyup="filtrarCampos()">
+        </div>
+
+        <!-- Categorias Compactas -->
+        <div class="campo-categoria" data-categoria="pessoa">
+          <div class="categoria-header" onclick="toggleCategoria(this)">
+            <span class="categoria-icon">👤</span>
+            <span class="categoria-nome">Pessoais</span>
+            <span class="categoria-toggle">▼</span>
+          </div>
+          <div class="categoria-campos">
+            <div class="campo-compact" draggable="true" data-field="nome" data-table="estagio" data-categoria="pessoa">
+              <span class="campo-icon">👤</span>
+              <span class="campo-nome">Nome</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="email" data-table="estagio" data-categoria="pessoa">
+              <span class="campo-icon">📧</span>
+              <span class="campo-nome">E-mail</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="telefone" data-table="estagio" data-categoria="pessoa">
+              <span class="campo-icon">📱</span>
+              <span class="campo-nome">Telefone</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="periodo" data-table="estagio" data-categoria="pessoa">
+              <span class="campo-icon">📅</span>
+              <span class="campo-nome">Período</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="campo-categoria" data-categoria="academico">
+          <div class="categoria-header" onclick="toggleCategoria(this)">
+            <span class="categoria-icon">🎓</span>
+            <span class="categoria-nome">Acadêmicos</span>
+            <span class="categoria-toggle">▼</span>
+          </div>
+          <div class="categoria-campos">
+            <div class="campo-compact" draggable="true" data-field="curso_nome" data-table="curso" data-categoria="academico">
+              <span class="campo-icon">🎓</span>
+              <span class="campo-nome">Curso</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="disciplina" data-table="estagio" data-categoria="academico">
+              <span class="campo-icon">📚</span>
+              <span class="campo-nome">Disciplina</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="nivel" data-table="estagio" data-categoria="academico">
+              <span class="campo-icon">📈</span>
+              <span class="campo-nome">Nível</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="carga_horaria" data-table="estagio" data-categoria="academico">
+              <span class="campo-icon">⏰</span>
+              <span class="campo-nome">Carga Horária</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="campo-categoria" data-categoria="estagio">
+          <div class="categoria-header" onclick="toggleCategoria(this)">
+            <span class="categoria-icon">🏥</span>
+            <span class="categoria-nome">Estágio</span>
+            <span class="categoria-toggle">▼</span>
+          </div>
+          <div class="categoria-campos">
+            <div class="campo-compact" draggable="true" data-field="instituicao_nome" data-table="instituicao" data-categoria="estagio">
+              <span class="campo-icon">🏥</span>
+              <span class="campo-nome">Instituição</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="supervisor_nome" data-table="supervisor" data-categoria="estagio">
+              <span class="campo-icon">👨‍⚕️</span>
+              <span class="campo-nome">Supervisor</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="unidade_nome" data-table="unidade" data-categoria="estagio">
+              <span class="campo-icon">🏢</span>
+              <span class="campo-nome">Unidade</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="status" data-table="estagio" data-categoria="estagio">
+              <span class="campo-icon">📊</span>
+              <span class="campo-nome">Status</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="valor_total" data-table="estagio" data-categoria="estagio">
+              <span class="campo-icon">💰</span>
+              <span class="campo-nome">Valor Total</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="campo-categoria" data-categoria="tempo">
+          <div class="categoria-header" onclick="toggleCategoria(this)">
+            <span class="categoria-icon">📅</span>
+            <span class="categoria-nome">Datas</span>
+            <span class="categoria-toggle">▼</span>
+          </div>
+          <div class="categoria-campos">
+            <div class="campo-compact" draggable="true" data-field="data_inicio" data-table="estagio" data-categoria="tempo">
+              <span class="campo-icon">🗓️</span>
+              <span class="campo-nome">Data Início</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="data_fim" data-table="estagio" data-categoria="tempo">
+              <span class="campo-icon">🏁</span>
+              <span class="campo-nome">Data Fim</span>
+            </div>
+            <div class="campo-compact" draggable="true" data-field="created_at" data-table="estagio" data-categoria="tempo">
+              <span class="campo-icon">📝</span>
+              <span class="campo-nome">Criação</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Painel de Filtros Flutuante -->
+    <div class="filtros-popup" id="filtrosPopup" style="display: none;">
+      <div class="filtros-header">
+        <h3>🔍 Filtros</h3>
+        <button class="btn-close-filtros" onclick="toggleFiltros()">✕</button>
+      </div>
+      
+      <div class="filtros-content">
+        <div class="filtros-grid">
+          <div class="filtro-group">
+            <label>📅 Período</label>
+            <div class="filtro-periodo">
+              <input type="date" id="filtroDataInicio" class="input-compact">
+              <span>até</span>
+              <input type="date" id="filtroDataFim" class="input-compact">
+            </div>
+          </div>
+
+          <div class="filtro-group">
+            <label>📊 Status</label>
+            <select id="filtroStatus" class="select-compact">
+              <option value="">Todos</option>
+              <option value="ativo">Ativo</option>
+              <option value="concluido">Concluído</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+
+          <div class="filtro-group">
+            <label>🎓 Curso</label>
+            <select id="filtroCurso" class="select-compact">
+              <option value="">Todos</option>
+              {% for curso in cursos %}
+              <option value="{{ curso.id }}">{{ curso.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="filtro-group">
+            <label>🏥 Instituição</label>
+            <select id="filtroInstituicao" class="select-compact">
+              <option value="">Todas</option>
+              {% for instituicao in instituicoes %}
+              <option value="{{ instituicao.id }}">{{ instituicao.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="filtros-actions">
+          <button class="btn-toolbar secondary" onclick="limparFiltros()">Limpar</button>
+          <button class="btn-toolbar primary" onclick="aplicarFiltros()">Aplicar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Área Principal de Trabalho -->
+    <div class="workspace-principal" id="workspacePrincipal">
+      <!-- Estado Inicial -->
+      <div class="workspace-empty" id="workspaceEmpty">
+        <div class="empty-icon">📊</div>
+        <h2>Construa seu Relatório</h2>
+        <p>Arraste campos da barra lateral ou clique no botão "Campos" para começar</p>
+        <div class="empty-actions">
+          <button class="btn-workspace" onclick="toggleSidebar()">
+            <i>📋</i> Abrir Campos
+          </button>
+          <button class="btn-workspace" onclick="toggleFiltros()">
+            <i>🔍</i> Configurar Filtros
+          </button>
+        </div>
+      </div>
+
+      <!-- Construtor Ativo -->
+      <div class="workspace-construtor" id="workspaceConstrutor" style="display: none;">
+        <!-- Modo Simples -->
+        <div class="construtor-simples" id="construtorSimples">
+          <div class="construtor-header">
+            <h3>📊 Campos Selecionados</h3>
+            <div class="construtor-actions">
+              <button class="btn-mini" onclick="limparCampos()">🗑️</button>
+            </div>
+          </div>
+          <div class="campos-selecionados-grid" id="camposGrid" ondragover="event.preventDefault()" ondrop="onDropWorkspace(event)"></div>
+        </div>
+
+        <!-- Modo Agregado -->
+        <div class="construtor-agregado" id="construtorAgregado" style="display: none;">
+          <div class="agregado-zones">
+            <div class="zone-container">
+              <div class="zone-header">📏 Linhas</div>
+              <div class="zone-drop" id="zona-linhas" ondragover="event.preventDefault()" ondrop="onDropZona(event, 'linhas')">
+                <div class="zone-placeholder">Arraste campos para agrupar por linhas</div>
+              </div>
+            </div>
+
+            <div class="zone-container">
+              <div class="zone-header">📊 Valores</div>
+              <div class="zone-drop" id="zona-valores" ondragover="event.preventDefault()" ondrop="onDropZona(event, 'valores')">
+                <div class="zone-placeholder">Arraste campos para calcular métricas</div>
+              </div>
+            </div>
+
+            <div class="zone-container">
+              <div class="zone-header">📋 Colunas</div>
+              <div class="zone-drop" id="zona-colunas" ondragover="event.preventDefault()" ondrop="onDropZona(event, 'colunas')">
+                <div class="zone-placeholder">Arraste campos para colunas (opcional)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Área de Resultados -->
+      <div class="workspace-resultado" id="workspaceResultado" style="display: none;">
+        <div class="resultado-toolbar">
+          <div class="resultado-info" id="resultadoInfo"></div>
+          <div class="resultado-actions">
+            <button class="btn-resultado" onclick="exportarCSV()">📁 CSV</button>
+            <button class="btn-resultado" onclick="imprimirRelatorio()">🖨️ Imprimir</button>
+            <button class="btn-resultado" onclick="voltarConstrutor()">✏️ Editar</button>
+          </div>
+        </div>
+        <div class="resultado-container" id="resultadoContainer">
+          <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner"></div>
+            <span>Gerando relatório...</span>
+          </div>
+          <div class="tabela-resultado" id="tabelaResultado"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Estado global do sistema
+let camposSelecionados = [];
+let filtrosAtivos = {};
+let zonas = { linhas: [], colunas: [], valores: [] };
+let modoAgregado = false;
+let sidebarAberta = false;
+let filtrosAbertos = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+  inicializarInterface();
+  inicializarDragDrop();
+  atualizarToolbarStats();
+});
+
+function inicializarInterface() {
+  // Expandir primeira categoria por padrão
+  const primeiraCategoria = document.querySelector('.campo-categoria');
+  if (primeiraCategoria) {
+    toggleCategoria(primeiraCategoria.querySelector('.categoria-header'));
+  }
+  
+  // Configurar drop zone global no workspace
+  const workspace = document.getElementById('workspacePrincipal');
+  workspace.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.classList.add('drag-active');
+  });
+  
+  workspace.addEventListener('dragleave', function(e) {
+    if (!this.contains(e.relatedTarget)) {
+      this.classList.remove('drag-active');
+    }
+  });
+  
+  workspace.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.classList.remove('drag-active');
+    
+    try {
+      const dados = JSON.parse(e.dataTransfer.getData('text/plain'));
+      if (modoAgregado) {
+        adicionarEmZona('linhas', dados);
+      } else {
+        adicionarCampoSimples(dados);
+      }
+    } catch (error) {
+      console.error('Erro ao processar drop:', error);
+    }
+  });
+}
+
+function inicializarDragDrop() {
+  const campos = document.querySelectorAll('.campo-compact');
+  
+  campos.forEach(campo => {
+    campo.addEventListener('dragstart', function(e) {
+      const dados = {
+        field: this.dataset.field,
+        table: this.dataset.table,
+        categoria: this.dataset.categoria,
+        label: this.querySelector('.campo-nome').textContent,
+        icon: this.querySelector('.campo-icon').textContent
+      };
+      
+      e.dataTransfer.setData('text/plain', JSON.stringify(dados));
+      this.classList.add('dragging');
+    });
+    
+    campo.addEventListener('dragend', function() {
+      this.classList.remove('dragging');
+      document.querySelectorAll('.drag-active').forEach(el => el.classList.remove('drag-active'));
+    });
+  });
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebarCampos');
+  const btn = document.getElementById('btnSidebar');
+  
+  sidebarAberta = !sidebarAberta;
+  sidebar.classList.toggle('aberta', sidebarAberta);
+  btn.classList.toggle('ativo', sidebarAberta);
+  
+  if (sidebarAberta && filtrosAbertos) {
+    toggleFiltros(); // Fechar filtros se estiverem abertos
+  }
+}
+
+function toggleFiltros() {
+  const filtros = document.getElementById('filtrosPopup');
+  const btn = document.getElementById('btnFiltros');
+  
+  filtrosAbertos = !filtrosAbertos;
+  filtros.style.display = filtrosAbertos ? 'block' : 'none';
+  btn.classList.toggle('ativo', filtrosAbertos);
+  
+  if (filtrosAbertos && sidebarAberta) {
+    toggleSidebar(); // Fechar sidebar se estiver aberta
+  }
+}
+
+function alternarModo() {
+  modoAgregado = !modoAgregado;
+  atualizarModoInterface();
+  atualizarToolbarStats();
+  mostrarNotificacao(modoAgregado ? 'Modo agregado ativado' : 'Modo simples ativado', 'info');
+}
+
+function atualizarModoInterface() {
+  const simples = document.getElementById('construtorSimples');
+  const agregado = document.getElementById('construtorAgregado');
+  const btnModo = document.getElementById('btnModo');
+  
+  if (modoAgregado) {
+    simples.style.display = 'none';
+    agregado.style.display = 'block';
+    btnModo.innerHTML = '<i>🧮</i> Agregado';
+  } else {
+    simples.style.display = 'block';
+    agregado.style.display = 'none';
+    btnModo.innerHTML = '<i>🧮</i> Simples';
+  }
+}
+
+function adicionarCampoSimples(campo) {
+  // Verificar duplicata
+  const jaExiste = camposSelecionados.find(c => 
+    c.field === campo.field && c.table === campo.table
+  );
+  
+  if (jaExiste) {
+    mostrarNotificacao('Este campo já foi adicionado!', 'warning');
+    return;
+  }
+  
+  camposSelecionados.push(campo);
+  atualizarInterfaceSimples();
+  mostrarNotificacao(`Campo "${campo.label}" adicionado!`, 'success');
+}
+
+function atualizarInterfaceSimples() {
+  const empty = document.getElementById('workspaceEmpty');
+  const construtor = document.getElementById('workspaceConstrutor');
+  const grid = document.getElementById('camposGrid');
+  
+  if (camposSelecionados.length === 0) {
+    empty.style.display = 'flex';
+    construtor.style.display = 'none';
+  } else {
+    empty.style.display = 'none';
+    construtor.style.display = 'block';
+    
+    grid.innerHTML = camposSelecionados.map((campo, index) => `
+      <div class="campo-selecionado-compact">
+        <span class="campo-icon">${campo.icon}</span>
+        <span class="campo-nome">${campo.label}</span>
+        <button class="btn-remover" onclick="removerCampoSimples(${index})">✕</button>
+      </div>
+    `).join('');
+  }
+  
+  atualizarToolbarStats();
+}
+
+function removerCampoSimples(index) {
+  const campo = camposSelecionados[index];
+  camposSelecionados.splice(index, 1);
+  atualizarInterfaceSimples();
+  mostrarNotificacao(`Campo "${campo.label}" removido!`, 'info');
+}
+
+function onDropWorkspace(e) {
+  e.preventDefault();
+  try {
+    const dados = JSON.parse(e.dataTransfer.getData('text/plain'));
+    adicionarCampoSimples(dados);
+  } catch (error) {}
+}
+
+function onDropZona(e, zona) {
+  e.preventDefault();
+  e.stopPropagation();
+  try {
+    const dados = JSON.parse(e.dataTransfer.getData('text/plain'));
+    adicionarEmZona(zona, dados);
+  } catch (err) {}
+}
+
+function adicionarEmZona(zona, campo) {
+  const arr = zonas[zona];
+  if (!arr) return;
+  
+  const exists = arr.find(c => c.field === campo.field && c.table === campo.table);
+  if (exists) return mostrarNotificacao('Campo já existe na zona', 'warning');
+  
+  const novo = { ...campo };
+  if (zona === 'valores' && !novo.agg) novo.agg = 'count';
+  arr.push(novo);
+  
+  renderZonas();
+  atualizarInterfaceAgregada();
+  mostrarNotificacao(`Campo "${campo.label}" adicionado em ${zona}!`, 'success');
+}
+
+function renderZonas() {
+  ['linhas','colunas','valores'].forEach(z => {
+    const el = document.getElementById('zona-' + z);
+    if (!el) return;
+    
+    if (zonas[z].length === 0) {
+      el.innerHTML = `<div class="zone-placeholder">Arraste campos para ${z === 'linhas' ? 'agrupar por linhas' : z === 'valores' ? 'calcular métricas' : 'colunas (opcional)'}</div>`;
+    } else {
+      el.innerHTML = zonas[z].map((c, i) => `
+        <div class="campo-zona">
+          <span class="campo-icon">${c.icon || '🔹'}</span>
+          <span class="campo-nome">${c.label || c.field}</span>
+          ${z === 'valores' ? `
+            <select onchange="alterarAgregacao('valores', ${i}, this.value)" class="select-mini">
+              <option value="count" ${c.agg==='count'?'selected':''}>Count</option>
+              <option value="sum" ${c.agg==='sum'?'selected':''}>Sum</option>
+              <option value="avg" ${c.agg==='avg'?'selected':''}>Avg</option>
+              <option value="min" ${c.agg==='min'?'selected':''}>Min</option>
+              <option value="max" ${c.agg==='max'?'selected':''}>Max</option>
+            </select>
+          ` : ''}
+          <button class="btn-remover" onclick="removerDeZona('${z}', ${i})">✕</button>
+        </div>
+      `).join('');
+    }
+  });
+}
+
+function atualizarInterfaceAgregada() {
+  const empty = document.getElementById('workspaceEmpty');
+  const construtor = document.getElementById('workspaceConstrutor');
+  const totalCampos = zonas.linhas.length + zonas.valores.length + zonas.colunas.length;
+  
+  if (totalCampos === 0) {
+    empty.style.display = 'flex';
+    construtor.style.display = 'none';
+  } else {
+    empty.style.display = 'none';
+    construtor.style.display = 'block';
+  }
+  
+  atualizarToolbarStats();
+}
+
+function removerDeZona(zona, index) {
+  const campo = zonas[zona][index];
+  zonas[zona].splice(index, 1);
+  renderZonas();
+  atualizarInterfaceAgregada();
+  mostrarNotificacao(`Campo "${campo.label}" removido!`, 'info');
+}
+
+function alterarAgregacao(zona, index, valor) {
+  if (zona !== 'valores') return;
+  zonas[zona][index].agg = valor;
+}
+
+function atualizarToolbarStats() {
+  const statCampos = document.getElementById('statCampos');
+  const statFiltros = document.getElementById('statFiltros');
+  const statModo = document.getElementById('statModo');
+  const btnGerar = document.getElementById('btnGerar');
+  
+  let totalCampos;
+  if (modoAgregado) {
+    totalCampos = zonas.linhas.length + zonas.valores.length + zonas.colunas.length;
+  } else {
+    totalCampos = camposSelecionados.length;
+  }
+  
+  const totalFiltros = Object.keys(filtrosAtivos).length;
+  
+  statCampos.textContent = `${totalCampos} ${totalCampos === 1 ? 'campo' : 'campos'}`;
+  statFiltros.textContent = `${totalFiltros} ${totalFiltros === 1 ? 'filtro' : 'filtros'}`;
+  statModo.textContent = modoAgregado ? 'Agregado' : 'Simples';
+  
+  // Habilitar botão gerar
+  const podeGerar = modoAgregado ? 
+    (zonas.linhas.length > 0 || zonas.valores.length > 0) : 
+    (camposSelecionados.length > 0);
+  
+  btnGerar.disabled = !podeGerar;
+  btnGerar.classList.toggle('disabled', !podeGerar);
+}
+
+function toggleCategoria(header) {
+  const categoria = header.parentElement;
+  const campos = categoria.querySelector('.categoria-campos');
+  const toggle = header.querySelector('.categoria-toggle');
+  
+  const isCollapsed = campos.style.display === 'none';
+  campos.style.display = isCollapsed ? 'block' : 'none';
+  toggle.textContent = isCollapsed ? '▼' : '▶';
+}
+
+function filtrarCampos() {
+  const busca = document.getElementById('campoBusca').value.toLowerCase();
+  const campos = document.querySelectorAll('.campo-compact');
+  
+  campos.forEach(campo => {
+    const nome = campo.querySelector('.campo-nome').textContent.toLowerCase();
+    const visivel = nome.includes(busca);
+    campo.style.display = visivel ? 'flex' : 'none';
+  });
+}
+
+function limparFiltros() {
+  document.getElementById('filtroDataInicio').value = '';
+  document.getElementById('filtroDataFim').value = '';
+  document.getElementById('filtroStatus').value = '';
+  document.getElementById('filtroCurso').value = '';
+  document.getElementById('filtroInstituicao').value = '';
+  filtrosAtivos = {};
+  atualizarToolbarStats();
+  mostrarNotificacao('Filtros limpos!', 'info');
+}
+
+function aplicarFiltros() {
+  filtrosAtivos = {
+    data_inicio: document.getElementById('filtroDataInicio').value,
+    data_fim: document.getElementById('filtroDataFim').value,
+    status: document.getElementById('filtroStatus').value,
+    curso_id: document.getElementById('filtroCurso').value,
+    instituicao_id: document.getElementById('filtroInstituicao').value
+  };
+  
+  // Remover filtros vazios
+  Object.keys(filtrosAtivos).forEach(key => {
+    if (!filtrosAtivos[key]) delete filtrosAtivos[key];
+  });
+  
+  atualizarToolbarStats();
+  toggleFiltros(); // Fechar painel
+  mostrarNotificacao('Filtros aplicados!', 'success');
+}
+
+function limparCampos() {
+  if (modoAgregado) {
+    zonas = { linhas: [], colunas: [], valores: [] };
+    renderZonas();
+    atualizarInterfaceAgregada();
+  } else {
+    camposSelecionados = [];
+    atualizarInterfaceSimples();
+  }
+  mostrarNotificacao('Campos limpos!', 'info');
+}
+
+function limparTudo() {
+  limparCampos();
+  limparFiltros();
+  document.getElementById('workspaceResultado').style.display = 'none';
+  mostrarNotificacao('Tudo limpo!', 'info');
+}
+
+async function gerarRelatorio() {
+  const aplicarFiltrosAuto = () => {
+    filtrosAtivos = {
+      data_inicio: document.getElementById('filtroDataInicio').value,
+      data_fim: document.getElementById('filtroDataFim').value,
+      status: document.getElementById('filtroStatus').value,
+      curso_id: document.getElementById('filtroCurso').value,
+      instituicao_id: document.getElementById('filtroInstituicao').value
+    };
+    Object.keys(filtrosAtivos).forEach(key => {
+      if (!filtrosAtivos[key]) delete filtrosAtivos[key];
+    });
+  };
+  
+  aplicarFiltrosAuto();
+  
+  const dados = modoAgregado ? {
+    linhas: zonas.linhas,
+    valores: zonas.valores,
+    colunas: zonas.colunas,
+    filtros: filtrosAtivos,
+    formato: 'json'
+  } : {
+    campos: camposSelecionados,
+    filtros: filtrosAtivos,
+    formato: 'json'
+  };
+  
+  try {
+    mostrarLoading(true);
+    mostrarResultado();
+    
+    const response = await fetch('/web/relatorios/gerar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(dados)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro ${response.status}: ${response.statusText}`);
+    }
+    
+    const resultado = await response.json();
+    
+    if (resultado.aggregate) {
+      exibirResultadoAgregado(resultado);
+    } else {
+      exibirResultadoSimples(resultado);
+    }
+    
+    mostrarNotificacao('Relatório gerado com sucesso!', 'success');
+    
+  } catch (error) {
+    console.error('Erro ao gerar relatório:', error);
+    mostrarNotificacao(`Erro: ${error.message}`, 'error');
+  } finally {
+    mostrarLoading(false);
+  }
+}
+
+function mostrarResultado() {
+  document.getElementById('workspaceEmpty').style.display = 'none';
+  document.getElementById('workspaceConstrutor').style.display = 'none';
+  document.getElementById('workspaceResultado').style.display = 'block';
+}
+
+function voltarConstrutor() {
+  document.getElementById('workspaceResultado').style.display = 'none';
+  
+  const totalCampos = modoAgregado ? 
+    (zonas.linhas.length + zonas.valores.length + zonas.colunas.length) :
+    camposSelecionados.length;
+    
+  if (totalCampos === 0) {
+    document.getElementById('workspaceEmpty').style.display = 'flex';
+  } else {
+    document.getElementById('workspaceConstrutor').style.display = 'block';
+  }
+}
+
+function mostrarLoading(show) {
+  const loading = document.getElementById('loadingOverlay');
+  loading.style.display = show ? 'flex' : 'none';
+}
+
+function exibirResultadoSimples(resultado) {
+  const info = document.getElementById('resultadoInfo');
+  const tabela = document.getElementById('tabelaResultado');
+  
+  const numFiltros = Object.keys(filtrosAtivos).length;
+  info.innerHTML = `
+    <div class="resultado-stats">
+      <span class="stat">${resultado.total} registros</span>
+      <span class="stat">${camposSelecionados.length} campos</span>
+      <span class="stat">${numFiltros} filtros</span>
+      <span class="stat">${new Date().toLocaleDateString('pt-BR')}</span>
+    </div>
+  `;
+  
+  if (resultado.dados.length === 0) {
+    tabela.innerHTML = `
+      <div class="no-data">
+        <div class="no-data-icon">📭</div>
+        <h3>Nenhum resultado encontrado</h3>
+        <p>Tente ajustar os filtros ou selecionar diferentes campos</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const headers = camposSelecionados.map(c => c.label);
+  const rows = resultado.dados.map(row => 
+    camposSelecionados.map(campo => {
+      let valor = row[campo.field] || '';
+      
+      if (valor && campo.field.includes('data')) {
+        valor = new Date(valor).toLocaleDateString('pt-BR');
+      } else if (valor && campo.field === 'valor_total') {
+        valor = 'R$ ' + parseFloat(valor).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+      } else if (valor && campo.field === 'carga_horaria') {
+        valor = valor + 'h';
+      }
+      
+      return valor || '-';
+    })
+  );
+  
+  tabela.innerHTML = `
+    <table class="tabela-compacta">
+      <thead>
+        <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+      </thead>
+      <tbody>
+        ${rows.map((row, i) => `
+          <tr class="${i % 2 === 0 ? 'even' : 'odd'}">
+            ${row.map(cell => `<td>${cell}</td>`).join('')}
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function exibirResultadoAgregado(resultado) {
+  const info = document.getElementById('resultadoInfo');
+  const tabela = document.getElementById('tabelaResultado');
+  
+  const numFiltros = Object.keys(filtrosAtivos).length;
+  info.innerHTML = `
+    <div class="resultado-stats">
+      <span class="stat">${resultado.total} grupos</span>
+      <span class="stat">${zonas.linhas.length} linhas</span>
+      <span class="stat">${zonas.valores.length} métricas</span>
+      <span class="stat">${numFiltros} filtros</span>
+    </div>
+  `;
+  
+  if (!resultado.dados || resultado.dados.length === 0) {
+    tabela.innerHTML = `
+      <div class="no-data">
+        <div class="no-data-icon">📭</div>
+        <h3>Nenhum resultado encontrado</h3>
+        <p>Tente ajustar os filtros ou selecionar diferentes campos</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const headers = [
+    ...zonas.linhas.map(c => c.label || c.field),
+    ...zonas.valores.map(v => `${(v.agg || 'count').toUpperCase()}(${v.label || v.field})`)
+  ];
+  
+  const rows = resultado.dados.map(row => [
+    ...zonas.linhas.map(c => row[c.field] ?? '-'),
+    ...zonas.valores.map(v => {
+      const key = `${(v.agg || 'count').toLowerCase()}_${v.field}`;
+      const val = row[key];
+      return val ?? 0;
+    })
+  ]);
+  
+  tabela.innerHTML = `
+    <table class="tabela-compacta">
+      <thead>
+        <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+      </thead>
+      <tbody>
+        ${rows.map((r,i) => `
+          <tr class="${i%2===0?'even':'odd'}">
+            ${r.map(cell => `<td>${cell}</td>`).join('')}
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function exportarCSV() {
+  const dados = modoAgregado ? {
+    linhas: zonas.linhas,
+    valores: zonas.valores,
+    colunas: zonas.colunas,
+    filtros: filtrosAtivos,
+    formato: 'csv'
+  } : { campos: camposSelecionados, filtros: filtrosAtivos, formato: 'csv' };
+  
+  try {
+    const response = await fetch('/web/relatorios/gerar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(dados)
+    });
+    
+    if (!response.ok) throw new Error('Erro ao exportar CSV');
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `relatorio_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+    
+    mostrarNotificacao('CSV baixado com sucesso!', 'success');
+  } catch (error) {
+    mostrarNotificacao(`Erro: ${error.message}`, 'error');
+  }
+}
+
+function imprimirRelatorio() {
+  const conteudo = document.getElementById('tabelaResultado').innerHTML;
+  const campos = modoAgregado ? 
+    [...zonas.linhas.map(c => c.label), ...zonas.valores.map(v => `${v.agg}(${v.label})`)] :
+    camposSelecionados.map(c => c.label);
+    
+  const janela = window.open('', '_blank');
+  janela.document.write(`
+    <html>
+      <head>
+        <title>Relatório - Sistema de Estágios</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f8f9fa; font-weight: bold; }
+          tr:nth-child(even) { background-color: #f8f9fa; }
+          .no-data { text-align: center; padding: 40px; }
+          @media print { body { margin: 0; } }
+        </style>
+      </head>
+      <body>
+        <h1>Sistema de Estágios - Relatório Dinâmico</h1>
+        <p><strong>Gerado em:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+        <p><strong>Campos:</strong> ${campos.join(', ')}</p>
+        ${conteudo}
+      </body>
+    </html>
+  `);
+  janela.document.close();
+  janela.print();
+}
+
+function mostrarNotificacao(mensagem, tipo = 'info') {
+  const notifAnterior = document.querySelector('.notificacao-toast');
+  if (notifAnterior) notifAnterior.remove();
+  
+  const cores = {
+    success: '#10b981',
+    error: '#ef4444', 
+    warning: '#f59e0b',
+    info: '#3b82f6'
+  };
+  
+  const icones = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️', 
+    info: 'ℹ️'
+  };
+  
+  const toast = document.createElement('div');
+  toast.className = 'notificacao-toast';
+  toast.style.cssText = `
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background: ${cores[tipo]};
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    font-weight: 500;
+    animation: slideIn 0.3s ease;
+  `;
+  toast.innerHTML = `${icones[tipo]} ${mensagem}`;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Catálogos{% endblock %}
+{% block content %}
+<h1>Catálogos</h1>
+
+<!-- Territórios -->
+<section class="card">
+  <h2>Territórios</h2>
+  <form method="post" action="/web/catalogos/territorios" class="form-grid cols-2">
+    <label>Nome do Território
+      <input type="text" name="nome" required placeholder="Ex: Centro, Norte, Sul..." />
+    </label>
+    <label>Descrição
+      <input type="text" name="descricao" placeholder="Descrição do território" />
+    </label>
+    <div class="col-span-2">
+      <button type="submit" class="btn-primary">Adicionar Território</button>
+    </div>
+  </form>
+  
+  <table class="table" style="margin-top: 1.5rem;">
+    <thead>
+      <tr>
+        <th>ID</th><th>Nome</th><th>Descrição</th><th>Estágios</th><th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in territorios %}
+      <tr>
+        <td>{{ t.id }}</td>
+        <td>{{ t.nome }}</td>
+        <td>{{ t.descricao or '-' }}</td>
+        <td>{{ t.estagios|length }} estágio(s)</td>
+        <td>
+          <form method="post" action="/web/catalogos/territorios/delete/{{ t.id }}" style="display:inline" onsubmit="return confirm('Excluir território {{ t.nome }}?');">
+            <button class="btn-small" style="background:#dc2626" type="submit">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<div class="grid cols-3">
+  <section class="card">
+    <h2>Instituições</h2>
+    <form method="post" action="/web/catalogos/instituicoes" class="inline-form">
+      <input type="text" name="nome" placeholder="Nome" required />
+      <button class="btn-small" type="submit">Adicionar</button>
+    </form>
+    <ul class="list">
+      {% for i in instituicoes %}
+        <li style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;">{{ i.nome }}
+          <form method="post" action="/web/catalogos/instituicoes/delete/{{ i.id }}" style="margin:0" onsubmit="return confirm('Excluir instituição {{ i.nome }}?');">
+            <button class="btn-small" style="background:#dc2626" type="submit">X</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="card">
+    <h2>Cursos</h2>
+    <form method="post" action="/web/catalogos/cursos" class="inline-form">
+      <input type="text" name="nome" placeholder="Nome" required />
+      <button class="btn-small" type="submit">Adicionar</button>
+    </form>
+    <ul class="list">
+      {% for c in cursos %}
+        <li style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;">{{ c.nome }}
+          <form method="post" action="/web/catalogos/cursos/delete/{{ c.id }}" style="margin:0" onsubmit="return confirm('Excluir curso {{ c.nome }}?');">
+            <button class="btn-small" style="background:#dc2626" type="submit">X</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="card">
+    <h2>Unidades</h2>
+    <form method="post" action="/web/catalogos/unidades" class="inline-form">
+      <input type="text" name="nome" placeholder="Nome" required />
+      <button class="btn-small" type="submit">Adicionar</button>
+    </form>
+    <ul class="list">
+      {% for u in unidades %}
+        <li style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;">{{ u.nome }}
+          <form method="post" action="/web/catalogos/unidades/delete/{{ u.id }}" style="margin:0" onsubmit="return confirm('Excluir unidade {{ u.nome }}?');">
+            <button class="btn-small" style="background:#dc2626" type="submit">X</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

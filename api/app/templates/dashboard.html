@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Sistema de Estágios{% endblock %}
+{% block content %}
+<div class="dashboard-header">
+  <h1>Dashboard</h1>
+  <p class="welcome">Bem-vindo(a), {{ user.nome }}!</p>
+</div>
+
+<div class="metrics-grid">
+  <div class="metric-card primary">
+    <div class="metric-icon">👥</div>
+    <div class="metric-content">
+      <h3>{{ total_estagios or 0 }}</h3>
+      <p>Total de Estágios</p>
+    </div>
+  </div>
+  
+  <div class="metric-card success">
+    <div class="metric-icon">✅</div>
+    <div class="metric-content">
+      <h3>{{ estagios_ativos or 0 }}</h3>
+      <p>Estágios Ativos</p>
+    </div>
+  </div>
+  
+  <div class="metric-card warning">
+    <div class="metric-icon">👨‍⚕️</div>
+    <div class="metric-content">
+      <h3>{{ total_supervisores or 0 }}</h3>
+      <p>Supervisores</p>
+    </div>
+  </div>
+  
+  <div class="metric-card info">
+    <div class="metric-icon">🏥</div>
+    <div class="metric-content">
+      <h3>{{ total_instituicoes or 0 }}</h3>
+      <p>Instituições</p>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <section class="card">
+    <h2>Últimos Estágios Cadastrados</h2>
+    <div class="recent-list">
+      {% if ultimos_estagios %}
+        {% for estagio in ultimos_estagios %}
+        <div class="recent-item">
+          <div class="recent-avatar">{{ estagio.nome[0] }}</div>
+          <div class="recent-info">
+            <strong>{{ estagio.nome }}</strong>
+            <span>{{ estagio.curso.nome if estagio.curso else 'Curso não definido' }}</span>
+            <small>{{ estagio.created_at.strftime('%d/%m/%Y') if estagio.created_at else '' }}</small>
+          </div>
+          <div class="recent-actions">
+            <a href="/relatorios/anexo2/{{ estagio.id }}?format=html" class="btn-small" target="_blank">Ver</a>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p>Nenhum estágio cadastrado ainda.</p>
+      {% endif %}
+    </div>
+  </section>
+  
+  <section class="card">
+    <h2>Ações Rápidas</h2>
+    <div class="quick-actions">
+      <a href="/web/estagios" class="action-btn">
+        <span class="action-icon">➕</span>
+        <span>Novo Estágio</span>
+      </a>
+      <a href="/web/supervisores" class="action-btn">
+        <span class="action-icon">👨‍⚕️</span>
+        <span>Supervisores</span>
+      </a>
+      <a href="/web/catalogos" class="action-btn">
+        <span class="action-icon">📋</span>
+        <span>Catálogos</span>
+      </a>
+      <a href="/web/relatorios" class="action-btn">
+        <span class="action-icon">📊</span>
+        <span>Relatórios</span>
+      </a>
+    </div>
+  </section>
+</div>
+{% endblock %}

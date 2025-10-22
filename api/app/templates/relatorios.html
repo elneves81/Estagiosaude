@@ -1,0 +1,1246 @@
+{% extends "base.html" %}
+{% block title %}Relatórios Dinâmicos - Sistema de Estágios{% endblock %}
+
+{% block content %}
+<div class="relatorios-fullscreen">
+  <!-- Barra de Ferramentas Fixa -->
+  <div class="toolbar-fixed">
+    <div class="toolbar-left">
+      <h1>📊 Relatórios Dinâmicos</h1>
+      <div class="toolbar-stats" id="toolbarStats">
+        <span class="stat-item" id="statCampos">0 campos</span>
+        <span class="stat-item" id="statFiltros">0 filtros</span>
+        <span class="stat-item" id="statModo">Simples</span>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn-toolbar" onclick="toggleSidebar()" id="btnSidebar">
+        <i>📋</i> Campos
+      </button>
+      <button class="btn-toolbar" onclick="togglePresets()" id="btnPresets">
+        <i>✨</i> Presets
+      </button>
+      <button class="btn-toolbar" onclick="toggleFiltros()" id="btnFiltros">
+        <i>�</i> Filtros
+      </button>
+      <button class="btn-toolbar" onclick="alternarModo()" id="btnModo">
+        <i>🧮</i> Modo
+      </button>
+      <button class="btn-toolbar danger" onclick="limparTudo()">
+        <i>🗑️</i> Limpar
+      </button>
+      <button class="btn-toolbar primary" onclick="gerarRelatorio()" id="btnGerar" disabled>
+        <i>📊</i> Gerar
+      </button>
+
+      <!-- Menu de Presets -->
+      <div id="presetsMenu" style="display:none; position:absolute; margin-top:44px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.12); padding:8px; z-index:1000;">
+        <div style="font-weight:600; font-size:12px; color:#6b7280; padding:6px 8px;">Modelos rápidos</div>
+        <button class="btn-toolbar" style="width:100%; justify-content:flex-start;" onclick="aplicarPreset('basico')">📎 Básico (Nome, Curso, Status)</button>
+        <button class="btn-toolbar" style="width:100%; justify-content:flex-start;" onclick="aplicarPreset('financeiro')">💰 Financeiro (Instituição, Valor Total)</button>
+        <button class="btn-toolbar" style="width:100%; justify-content:flex-start;" onclick="aplicarPreset('periodo')">📅 Período (Data Início, Data Fim)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout Principal Flexível -->
+  <div class="main-layout">
+    <!-- Chips de Filtros Ativos -->
+    <div id="filtrosChips" style="display:none; gap:8px; padding:8px 16px; position:sticky; top:64px; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); backdrop-filter: blur(6px); z-index:8;">
+    </div>
+    <!-- Sidebar Retrátil -->
+    <div class="sidebar-retratil" id="sidebarCampos">
+    
+    <!-- Sidebar de Campos -->
+    <div class="campos-sidebar">
+      <div class="sidebar-header">
+        <h3>🧩 Campos Disponíveis</h3>
+        <span class="sidebar-subtitle">Arraste para o construtor</span>
+      </div>
+      
+      <div class="campos-container">
+        <!-- Busca de Campos -->
+        <div class="campo-search">
+          <input type="text" placeholder="🔍 Buscar campo..." id="campoBusca" onkeyup="filtrarCampos()">
+        </div>
+
+        <!-- Categorias de Campos Dinâmicas -->
+        {% for categoria, campos in campos_disponiveis.items() %}
+        <div class="campo-categoria" data-categoria="{{ categoria }}">
+          <div class="categoria-header" onclick="toggleCategoria(this)">
+            <span class="categoria-icon">
+              {% if categoria == 'pessoa' %}👤{% elif categoria == 'academico' %}🎓{% elif categoria == 'estagio' %}🏥{% else %}📅{% endif %}
+            </span>
+            <span class="categoria-nome">
+              {% if categoria == 'pessoa' %}Dados Pessoais
+              {% elif categoria == 'academico' %}Dados Acadêmicos  
+              {% elif categoria == 'estagio' %}Dados do Estágio
+              {% else %}Datas e Horários{% endif %}
+            </span>
+            <span class="categoria-toggle">▼</span>
+          </div>
+          <div class="categoria-campos">
+            {% for campo in campos %}
+            <div class="campo-compact" draggable="true" data-field="{{ campo.field }}" data-table="{{ campo.table }}" data-categoria="{{ categoria }}">
+              <span class="campo-icon">{{ campo.icon }}</span>
+              <span class="campo-nome">{{ campo.label }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    
+    <!-- Área Central - Construtor -->
+    <div class="construtor-area">
+      <!-- Drop Zone Principal -->
+      <div class="construtor-main" id="construtorMain">
+        <div class="drop-zone-modern" id="dropZoneMain">
+          <div class="drop-placeholder" id="dropPlaceholder">
+            <div class="placeholder-icon">�</div>
+            <h3>Construa seu relatório aqui</h3>
+            <p>Arraste os campos da barra lateral para começar</p>
+            <div class="placeholder-hint">
+              <span>💡 Dica: Você pode reordenar os campos arrastando-os</span>
+            </div>
+          </div>
+          
+          <!-- Lista de Campos Selecionados -->
+          <div class="campos-selecionados-modern" id="camposSelecionados" style="display: none;">
+            <div class="selecionados-header">
+              <h3>📊 Campos do Relatório</h3>
+              <div class="selecionados-info">
+                <span id="contadorCampos" class="contador-badge">0 campos</span>
+                <button class="btn-limpar-campos" onclick="limparCampos()" title="Remover todos os campos">
+                  🗑️
+                </button>
+              </div>
+            </div>
+            <div class="campos-grid" id="camposGrid"></div>
+          </div>
+        </div>
+          <!-- Zonas para modo agregado (pivot) -->
+          <div class="pivot-zonas" id="pivotZonas" style="display:none; gap:16px; margin-top:16px; grid-template-columns: repeat(3, 1fr);">
+            <div class="zona" style="background:#fff; border-radius:12px; padding:12px; box-shadow:0 1px 3px rgba(16,24,40,0.06);" ondragover="event.preventDefault()" ondrop="onDropZona(event, 'linhas')">
+              <div class="zona-header" style="font-weight:600; margin-bottom:8px;">Linhas</div>
+              <div class="zona-body" id="zona-linhas" style="min-height:48px; display:grid; gap:8px;"></div>
+            </div>
+            <div class="zona" style="background:#fff; border-radius:12px; padding:12px; box-shadow:0 1px 3px rgba(16,24,40,0.06);" ondragover="event.preventDefault()" ondrop="onDropZona(event, 'colunas')">
+              <div class="zona-header" style="font-weight:600; margin-bottom:8px;">Colunas</div>
+              <div class="zona-body" id="zona-colunas" style="min-height:48px; display:grid; gap:8px;"></div>
+            </div>
+            <div class="zona" style="background:#fff; border-radius:12px; padding:12px; box-shadow:0 1px 3px rgba(16,24,40,0.06);" ondragover="event.preventDefault()" ondrop="onDropZona(event, 'valores')">
+              <div class="zona-header" style="font-weight:600; margin-bottom:8px;">Valores</div>
+              <div class="zona-body" id="zona-valores" style="min-height:48px; display:grid; gap:8px;"></div>
+            </div>
+          </div>
+      </div>
+
+      <!-- Painel de Filtros Avançados -->
+      <div class="filtros-modern" id="filtrosModern" style="display: none;">
+        <div class="filtros-header">
+          <h3>🔍 Filtros Avançados</h3>
+          <button class="btn-toggle-filtros" onclick="toggleFiltrosAvancados()">
+            <span id="filtrosToggleText">▼ Ocultar</span>
+          </button>
+        </div>
+        
+        <div class="filtros-content" id="filtrosContent">
+          <div class="filtros-grid">
+            <div class="filtro-group">
+              <label class="filtro-label">📅 Período</label>
+              <div class="filtro-periodo">
+                <input type="date" id="filtroDataInicio" class="input-modern" placeholder="Data início">
+                <span class="periodo-sep">até</span>
+                <input type="date" id="filtroDataFim" class="input-modern" placeholder="Data fim">
+              </div>
+            </div>
+
+            <div class="filtro-group">
+              <label class="filtro-label">📊 Status</label>
+              <select id="filtroStatus" class="select-modern">
+                <option value="">Todos os status</option>
+                <option value="ativo">Ativo</option>
+                <option value="concluido">Concluído</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+
+            <div class="filtro-group">
+              <label class="filtro-label">🎓 Curso</label>
+              <select id="filtroCurso" class="select-modern">
+                <option value="">Todos os cursos</option>
+                {% for curso in cursos %}
+                <option value="{{ curso.id }}">{{ curso.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="filtro-group">
+              <label class="filtro-label">🏥 Instituição</label>
+              <select id="filtroInstituicao" class="select-modern">
+                <option value="">Todas as instituições</option>
+                {% for instituicao in instituicoes %}
+                <option value="{{ instituicao.id }}">{{ instituicao.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="filtro-group">
+              <label class="filtro-label">🏢 Unidade</label>
+              <select id="filtroUnidade" class="select-modern">
+                <option value="">Todas as unidades</option>
+                {% for unidade in unidades %}
+                <option value="{{ unidade.id }}">{{ unidade.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="filtro-group">
+              <label class="filtro-label">🌍 Território</label>
+              <select id="filtroTerritorio" class="select-modern">
+                <option value="">Todos os territórios</option>
+                {% for territorio in territorios %}
+                <option value="{{ territorio.id }}">{{ territorio.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="filtros-actions">
+            <button class="btn-modern secondary" onclick="limparFiltros()">
+              <i>🔄</i> Limpar Filtros
+            </button>
+            <button class="btn-modern primary" onclick="aplicarFiltros()">
+              <i>✓</i> Aplicar Filtros
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Área de Resultado -->
+  <div class="resultado-empty-wrapper" id="resultadoEmpty" style="display:none; background:#ffffff; border:0; border-radius: 0; margin: 0; padding: 32px 24px; min-height: calc(100vh - 88px); align-items: center; justify-content: center; text-align: center; transition: box-shadow .2s ease, border-color .2s ease;">
+    <div class="no-data-modern" style="max-width: 920px; margin: 0 auto; color: #0f172a;">
+      <div class="no-data-icon">📊</div>
+      <h3>Relatórios do Sistema de Estágios</h3>
+  <p style="color: #6b7280;">Comece montando seu relatório: arraste campos da barra lateral ou use um modelo pronto.</p>
+      <div class="empty-actions" style="display:flex; gap:12px; justify-content:center; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn-modern primary" onclick="togglePresets()">✨ Ver modelos</button>
+        <button class="btn-modern secondary" onclick="toggleFiltros()">🔍 Ajustar filtros</button>
+        <button class="btn-modern" onclick="alternarModo()">🧮 Alternar modo</button>
+      </div>
+      <ul class="empty-tips" style="text-align:left; max-width:780px; margin:16px auto 0; color:#6b7280;">
+        <li>💡 Modo simples: arraste campos para o construtor e clique em <strong>Gerar</strong>.</li>
+        <li>💡 Modo agregado: arraste campos para <strong>Linhas</strong> e <strong>Valores</strong> para criar visões resumidas.</li>
+        <li>✨ Use <strong>Modelos</strong> para começar mais rápido.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="resultado-modern" id="resultadoModern" style="display: none;">
+    <div class="resultado-header">
+      <div class="resultado-info">
+        <h2>� Resultado do Relatório</h2>
+        <div class="resultado-stats" id="resultadoStats"></div>
+      </div>
+      <div class="resultado-actions">
+        <button class="btn-action csv" onclick="exportarCSV()" title="Baixar CSV">
+          <i>📁</i> CSV
+        </button>
+        <button class="btn-action excel" onclick="exportarExcel()" title="Baixar Excel" disabled>
+          <i>📊</i> Excel
+        </button>
+        <button class="btn-action print" onclick="imprimirRelatorio()" title="Imprimir">
+          <i>🖨️</i> Imprimir
+        </button>
+        <button class="btn-action share" onclick="compartilharRelatorio()" title="Compartilhar">
+          <i>�</i> Compartilhar
+        </button>
+      </div>
+    </div>
+    
+    <div class="resultado-content">
+      <div class="tabela-container" id="tabelaContainer">
+        <div class="tabela-loading" id="tabelaLoading" style="display: none;">
+          <div class="loading-spinner"></div>
+          <span>Gerando relatório...</span>
+        </div>
+        <div class="tabela-resultado" id="tabelaResultado"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Sistema Moderno de Drag & Drop
+let camposSelecionados = [];
+let filtrosAtivos = {};
+let zonas = { linhas: [], colunas: [], valores: [] };
+let modoAgregado = false; // false = simples, true = agregado
+let sidebarAberta = false;
+let filtrosAbertos = false;
+let presetsAbertos = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+  inicializarDragDrop();
+  inicializarInterface();
+  atualizarStats();
+  atualizarGerar();
+  restaurarLayoutSalvo();
+  atualizarEstadoVazio();
+});
+
+function inicializarInterface() {
+  // Expandir primeira categoria por padrão
+  const primeiraCategoria = document.querySelector('.campo-categoria');
+  if (primeiraCategoria) {
+    toggleCategoria(primeiraCategoria.querySelector('.categoria-header'));
+  }
+  atualizarVisibilidadeZonas();
+  atualizarStats();
+  atualizarGerar();
+}
+
+function inicializarDragDrop() {
+  const camposCompactos = document.querySelectorAll('.campo-compact');
+  const dropZone = document.getElementById('dropZoneMain');
+  const dropEmpty = document.getElementById('resultadoEmpty');
+  
+  // Configurar drag nos campos
+  camposCompactos.forEach(campo => {
+    campo.addEventListener('dragstart', function(e) {
+      const dados = {
+        field: this.dataset.field,
+        table: this.dataset.table,
+        categoria: this.dataset.categoria,
+        label: this.querySelector('.campo-nome').textContent,
+        icon: this.querySelector('.campo-icon').textContent
+      };
+      
+      e.dataTransfer.setData('text/plain', JSON.stringify(dados));
+      this.classList.add('dragging');
+      
+      // Highlight da drop zone se existir
+      if (dropZone) {
+        dropZone.classList.add('drag-active');
+      }
+    });
+    
+    campo.addEventListener('dragend', function() {
+      this.classList.remove('dragging');
+      if (dropZone) {
+        dropZone.classList.remove('drag-active');
+      }
+    });
+  });
+  
+  // Configurar drop zone se existir
+  if (dropZone) {
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.classList.add('drag-over');
+    });
+    
+    dropZone.addEventListener('dragleave', function(e) {
+      if (!this.contains(e.relatedTarget)) {
+        this.classList.remove('drag-over');
+      }
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over', 'drag-active');
+      
+      try {
+        const dadosRaw = e.dataTransfer.getData('text/plain');
+        if (!dadosRaw || dadosRaw.trim() === '') {
+          console.warn('Dados de drag vazio');
+          return;
+        }
+        const dados = JSON.parse(dadosRaw);
+        if (modoAgregado) {
+          adicionarEmZona('linhas', dados);
+        } else {
+          adicionarCampoSimples(dados);
+        }
+      } catch (error) {
+      console.error('Erro ao processar drop:', error);
+    }
+  });
+  } // Fecha if (dropZone)
+
+  // Drop também na área vazia de resultado
+  if (dropEmpty) {
+    dropEmpty.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.style.boxShadow = '0 0 0 3px rgba(79,70,229,0.25) inset';
+      this.style.borderColor = '#c7d2fe';
+    });
+    dropEmpty.addEventListener('dragleave', function(e) {
+      if (!this.contains(e.relatedTarget)) {
+        this.style.boxShadow = '';
+        this.style.borderColor = '#e5e7eb';
+      }
+    });
+    dropEmpty.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.style.boxShadow = '';
+      this.style.borderColor = '#e5e7eb';
+      try {
+        const dadosRaw = e.dataTransfer.getData('text/plain');
+        if (!dadosRaw || dadosRaw.trim() === '') return;
+        const dados = JSON.parse(dadosRaw);
+        if (modoAgregado) {
+          adicionarEmZona('linhas', dados);
+        } else {
+          adicionarCampoSimples(dados);
+        }
+      } catch (_) { /* noop */ }
+    });
+  }
+}
+
+function adicionarCampoSimples(campo) {
+  // Verificar duplicata
+  const jaExiste = camposSelecionados.find(c => 
+    c.field === campo.field && c.table === campo.table
+  );
+  
+  if (jaExiste) {
+    mostrarNotificacao('Este campo já foi adicionado!', 'warning');
+    return;
+  }
+  
+  camposSelecionados.push(campo);
+  atualizarInterfaceModerna();
+  mostrarNotificacao(`Campo "${campo.label}" adicionado!`, 'success');
+  salvarLayout();
+}
+
+function atualizarInterfaceModerna() {
+  const placeholder = document.getElementById('dropPlaceholder');
+  const selecionados = document.getElementById('camposSelecionados');
+  const grid = document.getElementById('camposGrid');
+  const contador = document.getElementById('contadorCampos');
+  const filtros = document.getElementById('filtrosModern');
+  const btnGerar = document.getElementById('btnGerar');
+  const pivotZonas = document.getElementById('pivotZonas');
+  
+  if (camposSelecionados.length === 0) {
+    placeholder.style.display = 'flex';
+    selecionados.style.display = 'none';
+    filtros.style.display = 'none';
+    if (pivotZonas) pivotZonas.style.display = modoAgregado ? 'grid' : 'none';
+    btnGerar.disabled = true;
+    btnGerar.innerHTML = '<i>📊</i> Gerar Relatório';
+  } else {
+    placeholder.style.display = 'none';
+    selecionados.style.display = 'block';
+    filtros.style.display = 'block';
+    if (pivotZonas) pivotZonas.style.display = modoAgregado ? 'grid' : 'none';
+    btnGerar.disabled = false;
+    btnGerar.innerHTML = `<i>📊</i> Gerar Relatório (${camposSelecionados.length})`;
+    
+    // Atualizar contador
+    const texto = camposSelecionados.length === 1 ? 'campo' : 'campos';
+    contador.textContent = `${camposSelecionados.length} ${texto}`;
+    
+    // Atualizar grid de campos
+    grid.innerHTML = camposSelecionados.map((campo, index) => `
+      <div class="campo-selecionado" data-index="${index}">
+        <div class="campo-handle">⋮⋮</div>
+        <div class="campo-content">
+          <div class="campo-icone-sel">${campo.icon}</div>
+          <div class="campo-info-sel">
+            <div class="campo-nome-sel">${campo.label}</div>
+            <div class="campo-categoria-sel">${obterNomeCategoria(campo.categoria)}</div>
+          </div>
+          <div class="campo-tipo-sel">${campo.tipo || ''}</div>
+        </div>
+        <button class="campo-remover" onclick="removerCampoModerno(${index})" title="Remover campo">
+          ✕
+        </button>
+      </div>
+    `).join('');
+  }
+  atualizarStats();
+  atualizarGerar();
+  atualizarEstadoVazio();
+}
+
+function removerCampoModerno(index) {
+  const campo = camposSelecionados[index];
+  camposSelecionados.splice(index, 1);
+  atualizarInterfaceModerna();
+  mostrarNotificacao(`Campo "${campo.label}" removido!`, 'info');
+  salvarLayout();
+}
+
+function limparCampos() {
+  if (camposSelecionados.length === 0) return;
+  
+  camposSelecionados = [];
+  atualizarInterfaceModerna();
+  document.getElementById('resultadoModern').style.display = 'none';
+  mostrarNotificacao('Todos os campos foram removidos!', 'info');
+  salvarLayout();
+}
+
+function limparTudo() {
+  limparCampos();
+  limparFiltros();
+  // Limpar zonas do modo agregado
+  zonas = { linhas: [], colunas: [], valores: [] };
+  renderZonas();
+  atualizarVisibilidadeZonas();
+  document.getElementById('resultadoModern').style.display = 'none';
+  mostrarNotificacao('Relatório limpo!', 'info');
+  salvarLayout();
+}
+
+function atualizarVisibilidadeZonas() {
+  const pivotZonas = document.getElementById('pivotZonas');
+  if (pivotZonas) pivotZonas.style.display = modoAgregado ? 'grid' : 'none';
+  const dropMain = document.getElementById('dropZoneMain');
+  if (dropMain) dropMain.style.display = modoAgregado ? 'none' : 'block';
+  const btnModo = document.getElementById('btnModo');
+  if (btnModo) btnModo.innerHTML = `<i>🧮</i> Modo: ${modoAgregado ? 'Agregado' : 'Simples'}`;
+  atualizarStats();
+  atualizarGerar();
+}
+
+function alternarModo() {
+  modoAgregado = !modoAgregado;
+  atualizarVisibilidadeZonas();
+  mostrarNotificacao(modoAgregado ? 'Modo agregado ativado' : 'Modo simples ativado', 'info');
+  salvarLayout();
+  atualizarEstadoVazio();
+}
+
+function onDropZona(e, zona) {
+  e.preventDefault();
+  try {
+    const dadosRaw = e.dataTransfer.getData('text/plain');
+    if (!dadosRaw || dadosRaw.trim() === '') {
+      console.warn('Dados de drag vazio para zona:', zona);
+      return;
+    }
+    const dados = JSON.parse(dadosRaw);
+    adicionarEmZona(zona, dados);
+  } catch (err) {}
+}
+
+function adicionarEmZona(zona, campo) {
+  const arr = zonas[zona];
+  if (!arr) return;
+  const exists = arr.find(c => c.field === campo.field && c.table === campo.table);
+  if (exists) return mostrarNotificacao('Campo já existe na zona', 'warning');
+  const novo = { ...campo };
+  if (zona === 'valores' && !novo.agg) novo.agg = 'count';
+  arr.push(novo);
+  renderZonas();
+  salvarLayout();
+  atualizarEstadoVazio();
+}
+
+function removerDeZona(zona, index) {
+  zonas[zona].splice(index, 1);
+  renderZonas();
+  salvarLayout();
+  atualizarEstadoVazio();
+}
+
+function alterarAgregacao(zona, index, valor) {
+  if (zona !== 'valores') return;
+  zonas[zona][index].agg = valor;
+  salvarLayout();
+  atualizarEstadoVazio();
+}
+
+function renderZonas() {
+  ['linhas','colunas','valores'].forEach(z => {
+    const el = document.getElementById('zona-' + z);
+    if (!el) return;
+    el.innerHTML = zonas[z].map((c, i) => `
+      <div class="campo-selecionado">
+        <div class="campo-content">
+          <div class="campo-icone-sel">${c.icon || '🔹'}</div>
+          <div class="campo-info-sel">
+            <div class="campo-nome-sel">${c.label || c.field}</div>
+            <div class="campo-categoria-sel">${obterNomeCategoria(c.categoria || '')}</div>
+          </div>
+          ${z === 'valores' ? `
+            <select onchange="alterarAgregacao('valores', ${i}, this.value)" class="select-modern" style="max-width:120px;">
+              <option value="count" ${c.agg==='count'?'selected':''}>Contagem</option>
+              <option value="sum" ${c.agg==='sum'?'selected':''}>Soma</option>
+              <option value="avg" ${c.agg==='avg'?'selected':''}>Média</option>
+              <option value="min" ${c.agg==='min'?'selected':''}>Mín</option>
+              <option value="max" ${c.agg==='max'?'selected':''}>Máx</option>
+            </select>
+          ` : ''}
+        </div>
+        <div class="campo-actions" style="display:flex; gap:6px; align-items:center;">
+          <button class="campo-remover" onclick="removerDeZona('${z}', ${i})" title="Remover campo">✕</button>
+          <button class="campo-remover" onclick="moverZona('${z}', ${i}, -1)" title="Mover para cima" ${i===0?'disabled':''}>▲</button>
+          <button class="campo-remover" onclick="moverZona('${z}', ${i}, 1)" title="Mover para baixo" ${i===zonas[z].length-1?'disabled':''}>▼</button>
+        </div>
+      </div>
+    `).join('');
+  });
+  atualizarStats();
+  atualizarGerar();
+  atualizarEstadoVazio();
+}
+
+function toggleCategoria(header) {
+  const categoria = header.parentElement;
+  const campos = categoria.querySelector('.categoria-campos');
+  const toggle = header.querySelector('.categoria-toggle');
+  
+  const isCollapsed = campos.style.display === 'none';
+  campos.style.display = isCollapsed ? 'grid' : 'none';
+  toggle.textContent = isCollapsed ? '▼' : '▶';
+  
+  // Adicionar classe de estado
+  categoria.classList.toggle('collapsed', !isCollapsed);
+}
+
+function filtrarCampos() {
+  const busca = (document.getElementById('campoBusca')?.value || '').toLowerCase();
+  const campos = document.querySelectorAll('.campo-compact');
+  campos.forEach(campo => {
+    const nome = (campo.querySelector('.campo-nome')?.textContent || '').toLowerCase();
+    const visivel = nome.includes(busca);
+    campo.style.display = visivel ? 'flex' : 'none';
+  });
+  // Mostrar/ocultar categorias vazias baseado na visibilidade dos campos
+  document.querySelectorAll('.campo-categoria').forEach(cat => {
+    const anyVisible = Array.from(cat.querySelectorAll('.campo-compact')).some(
+      el => el.style.display !== 'none'
+    );
+    cat.style.display = anyVisible ? 'block' : 'none';
+  });
+}
+
+// Atualiza os números do cabeçalho (campos, filtros, modo)
+function atualizarStats() {
+  const statCampos = document.getElementById('statCampos');
+  const statFiltros = document.getElementById('statFiltros');
+  const statModo = document.getElementById('statModo');
+  const totalCampos = modoAgregado
+    ? (zonas.linhas.length + zonas.valores.length + zonas.colunas.length)
+    : camposSelecionados.length;
+  if (statCampos) statCampos.textContent = `${totalCampos} ${totalCampos === 1 ? 'campo' : 'campos'}`;
+  if (statFiltros) {
+    const totalFiltros = Object.keys(filtrosAtivos || {}).length;
+    statFiltros.textContent = `${totalFiltros} ${totalFiltros === 1 ? 'filtro' : 'filtros'}`;
+  }
+  if (statModo) statModo.textContent = modoAgregado ? 'Agregado' : 'Simples';
+}
+
+// Habilita/Desabilita o botão Gerar conforme o contexto
+function atualizarGerar() {
+  const btnGerar = document.getElementById('btnGerar');
+  if (!btnGerar) return;
+  const podeGerar = modoAgregado
+    ? (zonas.linhas.length > 0 || zonas.valores.length > 0)
+    : (camposSelecionados.length > 0);
+  btnGerar.disabled = !podeGerar;
+  // Label amigável
+  if (modoAgregado) {
+    const qt = zonas.linhas.length + zonas.valores.length + zonas.colunas.length;
+    btnGerar.innerHTML = `<i>📊</i> Gerar${qt ? ` (${qt})` : ''}`;
+  } else {
+    btnGerar.innerHTML = `<i>📊</i> Gerar${camposSelecionados.length ? ` (${camposSelecionados.length})` : ''}`;
+  }
+}
+
+
+function obterNomeCategoria(categoria) {
+  const nomes = {
+    'pessoa': 'Pessoais',
+    'academico': 'Acadêmicos', 
+    'estagio': 'Estágio',
+    'tempo': 'Datas'
+  };
+  return nomes[categoria] || categoria;
+}
+
+function toggleFiltrosAvancados() {
+  const content = document.getElementById('filtrosContent');
+  const toggle = document.getElementById('filtrosToggleText');
+  const isVisible = content.style.display !== 'none';
+  
+  content.style.display = isVisible ? 'none' : 'block';
+  toggle.textContent = isVisible ? '▼ Mostrar' : '▲ Ocultar';
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebarCampos');
+  const btn = document.getElementById('btnSidebar');
+  
+  sidebarAberta = !sidebarAberta;
+  sidebar.classList.toggle('aberta', sidebarAberta);
+  btn.classList.toggle('ativo', sidebarAberta);
+  
+  if (sidebarAberta && filtrosAbertos) {
+    toggleFiltros(); // Fechar filtros se estiverem abertos
+  }
+}
+
+function toggleFiltros() {
+  const filtros = document.getElementById('filtrosModern');
+  const btn = document.getElementById('btnFiltros');
+  
+  filtrosAbertos = !filtrosAbertos;
+  filtros.style.display = filtrosAbertos ? 'block' : 'none';
+  btn.classList.toggle('ativo', filtrosAbertos);
+  
+  if (filtrosAbertos && sidebarAberta) {
+    toggleSidebar(); // Fechar sidebar se estiver aberta
+  }
+}
+
+function togglePresets() {
+  const menu = document.getElementById('presetsMenu');
+  presetsAbertos = !presetsAbertos;
+  if (menu) menu.style.display = presetsAbertos ? 'block' : 'none';
+  if (presetsAbertos) {
+    if (filtrosAbertos) toggleFiltros();
+    if (sidebarAberta) toggleSidebar();
+  }
+}
+
+function aplicarPreset(tipo) {
+  camposSelecionados = [];
+  zonas = { linhas: [], colunas: [], valores: [] };
+  const mk = (categoria, table, field, label, icon) => ({ categoria, table, field, label, icon });
+  if (tipo === 'basico') {
+    camposSelecionados.push(
+      mk('pessoa','estagio','nome','Nome','👤'),
+      mk('academico','curso','nome','Curso','🎓'),
+      mk('estagio','estagio','status','Status','📊')
+    );
+    modoAgregado = false;
+  } else if (tipo === 'financeiro') {
+    camposSelecionados.push(
+      mk('estagio','instituicao','nome','Instituição','🏥'),
+      mk('estagio','estagio','valor_total','Valor Total','💰')
+    );
+    modoAgregado = false;
+  } else if (tipo === 'periodo') {
+    zonas.linhas.push(
+      mk('tempo','estagio','data_inicio','Data Início','🗓️'),
+      mk('tempo','estagio','data_fim','Data Fim','🏁')
+    );
+    zonas.valores.push({ ...mk('estagio','estagio','id','Qtd','🔢'), agg: 'count' });
+    modoAgregado = true;
+  }
+  atualizarVisibilidadeZonas();
+  atualizarInterfaceModerna();
+  renderZonas();
+  togglePresets();
+  salvarLayout();
+}
+
+function limparFiltros() {
+  document.getElementById('filtroDataInicio').value = '';
+  document.getElementById('filtroDataFim').value = '';
+  document.getElementById('filtroStatus').value = '';
+  document.getElementById('filtroCurso').value = '';
+  document.getElementById('filtroInstituicao').value = '';
+  document.getElementById('filtroUnidade').value = '';
+  document.getElementById('filtroTerritorio').value = '';
+  filtrosAtivos = {};
+  mostrarNotificacao('Filtros limpos!', 'info');
+  renderChipsFiltros();
+  atualizarStats();
+  salvarLayout();
+}
+
+function aplicarFiltros() {
+  filtrosAtivos = {
+    data_inicio: document.getElementById('filtroDataInicio').value,
+    data_fim: document.getElementById('filtroDataFim').value,
+    status: document.getElementById('filtroStatus').value,
+    curso_id: document.getElementById('filtroCurso').value,
+    instituicao_id: document.getElementById('filtroInstituicao').value,
+    unidade_id: document.getElementById('filtroUnidade').value,
+    territorio_id: document.getElementById('filtroTerritorio').value
+  };
+  
+  // Remover filtros vazios
+  Object.keys(filtrosAtivos).forEach(key => {
+    if (!filtrosAtivos[key]) delete filtrosAtivos[key];
+  });
+  
+  const numFiltros = Object.keys(filtrosAtivos).length;
+  const msg = numFiltros > 0 ? `${numFiltros} filtro(s) aplicado(s)!` : 'Filtros removidos!';
+  mostrarNotificacao(msg, 'success');
+  renderChipsFiltros();
+  atualizarStats();
+  salvarLayout();
+  atualizarEstadoVazio();
+}
+
+// Persistência simples do layout no localStorage
+function salvarLayout() {
+  try {
+    const payload = {
+      v: 1,
+      modoAgregado,
+      camposSelecionados,
+      zonas,
+      filtrosAtivos
+    };
+    localStorage.setItem('relatoriosLayoutV1', JSON.stringify(payload));
+  } catch (e) {
+    console.warn('Não foi possível salvar o layout:', e);
+  }
+}
+
+function restaurarLayoutSalvo() {
+  try {
+    const raw = localStorage.getItem('relatoriosLayoutV1');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.v !== 1) return;
+    modoAgregado = !!parsed.modoAgregado;
+    camposSelecionados = Array.isArray(parsed.camposSelecionados) ? parsed.camposSelecionados : [];
+    zonas = parsed.zonas && typeof parsed.zonas === 'object' ? parsed.zonas : { linhas: [], colunas: [], valores: [] };
+    filtrosAtivos = parsed.filtrosAtivos && typeof parsed.filtrosAtivos === 'object' ? parsed.filtrosAtivos : {};
+    atualizarVisibilidadeZonas();
+    atualizarInterfaceModerna();
+    renderZonas();
+    renderChipsFiltros();
+    atualizarStats();
+    atualizarGerar();
+  } catch (e) {
+    console.warn('Não foi possível restaurar o layout salvo:', e);
+  }
+}
+
+// Chips de filtros ativos
+function renderChipsFiltros() {
+  const cont = document.getElementById('filtrosChips');
+  if (!cont) return;
+  const keys = Object.keys(filtrosAtivos || {});
+  if (keys.length === 0) {
+    cont.style.display = 'none';
+    cont.innerHTML = '';
+    return;
+  }
+  const labels = {
+    data_inicio: 'De',
+    data_fim: 'Até',
+    status: 'Status',
+    curso_id: 'Curso',
+    instituicao_id: 'Instituição',
+    unidade_id: 'Unidade',
+    territorio_id: 'Território'
+  };
+  cont.style.display = 'flex';
+  cont.innerHTML = keys.map(k => `
+    <span class="chip" style="display:inline-flex; align-items:center; gap:8px; background:#eef2ff; color:#3730a3; padding:6px 10px; border-radius:999px; font-size:12px; border:1px solid #c7d2fe;">
+      <strong>${labels[k] || k}:</strong> ${filtrosAtivos[k]}
+      <button onclick="removerChipFiltro('${k}')" style="border:none; background:transparent; color:#4f46e5; cursor:pointer; font-weight:700;">×</button>
+    </span>
+  `).join('');
+}
+
+function removerChipFiltro(chave) {
+  if (!filtrosAtivos || !(chave in filtrosAtivos)) return;
+  delete filtrosAtivos[chave];
+  // Também limpar no form visual, quando aplicável
+  const mapForm = {
+    data_inicio: 'filtroDataInicio',
+    data_fim: 'filtroDataFim',
+    status: 'filtroStatus',
+    curso_id: 'filtroCurso',
+    instituicao_id: 'filtroInstituicao',
+    unidade_id: 'filtroUnidade',
+    territorio_id: 'filtroTerritorio'
+  };
+  const elId = mapForm[chave];
+  if (elId) {
+    const el = document.getElementById(elId);
+    if (el) el.value = '';
+  }
+  renderChipsFiltros();
+  atualizarStats();
+  salvarLayout();
+}
+
+// Reordenação nas zonas (linhas/colunas/valores)
+function moverZona(zona, index, direcao) {
+  const arr = zonas[zona];
+  if (!arr) return;
+  const novoIndex = index + direcao;
+  if (novoIndex < 0 || novoIndex >= arr.length) return;
+  const temp = arr[index];
+  arr[index] = arr[novoIndex];
+  arr[novoIndex] = temp;
+  renderZonas();
+  salvarLayout();
+}
+
+async function gerarRelatorio() {
+  if (!modoAgregado && camposSelecionados.length === 0) {
+    mostrarNotificacao('Selecione pelo menos um campo!', 'error');
+    return;
+  }
+  if (modoAgregado && zonas.linhas.length === 0 && zonas.valores.length === 0) {
+    mostrarNotificacao('No modo agregado, arraste campos para Linhas e Valores', 'error');
+    return;
+  }
+  
+  // Aplicar filtros automaticamente
+  aplicarFiltros();
+  
+  const dados = modoAgregado ? {
+    linhas: zonas.linhas,
+    valores: zonas.valores,
+    colunas: zonas.colunas,
+    filtros: filtrosAtivos,
+    formato: 'json'
+  } : {
+    campos: camposSelecionados,
+    filtros: filtrosAtivos,
+    formato: 'json'
+  };
+  
+  try {
+    mostrarLoading(true);
+    document.getElementById('resultadoModern').style.display = 'block';
+    
+    const response = await fetch('/web/relatorios/gerar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(dados)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro ${response.status}: ${response.statusText}`);
+    }
+    
+    const resultado = await response.json();
+    if (resultado.aggregate) {
+      exibirResultadoAgregado(resultado);
+    } else {
+      exibirResultadoModerno(resultado);
+    }
+    mostrarNotificacao('Relatório gerado com sucesso!', 'success');
+    
+  } catch (error) {
+    console.error('Erro ao gerar relatório:', error);
+    mostrarNotificacao(`Erro: ${error.message}`, 'error');
+    document.getElementById('resultadoModern').style.display = 'none';
+  } finally {
+    mostrarLoading(false);
+  }
+}
+
+function mostrarLoading(show) {
+  const loading = document.getElementById('tabelaLoading');
+  const resultado = document.getElementById('tabelaResultado');
+  
+  loading.style.display = show ? 'flex' : 'none';
+  resultado.style.display = show ? 'none' : 'block';
+}
+
+function exibirResultadoModerno(resultado) {
+  const stats = document.getElementById('resultadoStats');
+  const tabela = document.getElementById('tabelaResultado');
+  
+  // Estatísticas
+  const numFiltros = Object.keys(filtrosAtivos).length;
+  stats.innerHTML = `
+    <div class="stats-modern">
+      <div class="stat-card">
+        <div class="stat-number">${resultado.total}</div>
+        <div class="stat-label">Registros</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">${camposSelecionados.length}</div>
+        <div class="stat-label">Campos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">${numFiltros}</div>
+        <div class="stat-label">Filtros</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">${new Date().toLocaleDateString('pt-BR')}</div>
+        <div class="stat-label">Gerado em</div>
+      </div>
+    </div>
+  `;
+  
+  // Tabela
+  if (resultado.dados.length === 0) {
+    tabela.innerHTML = `
+      <div class="no-data-modern">
+        <div class="no-data-icon">📭</div>
+        <h3>Nenhum resultado encontrado</h3>
+        <p>Tente ajustar os filtros ou selecionar diferentes campos</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const headers = camposSelecionados.map(c => c.label);
+  const rows = resultado.dados.map(row => 
+    camposSelecionados.map(campo => {
+      let valor = row[campo.field] || '';
+      
+      // Formatação por tipo
+      if (valor && campo.field.includes('data')) {
+        valor = new Date(valor).toLocaleDateString('pt-BR');
+      } else if (valor && campo.field === 'valor_total') {
+        valor = 'R$ ' + parseFloat(valor).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+      } else if (valor && campo.field === 'carga_horaria') {
+        valor = valor + 'h';
+      }
+      
+      return valor || '-';
+    })
+  );
+  
+  tabela.innerHTML = `
+    <div class="tabela-wrapper">
+      <table class="tabela-modern">
+        <thead>
+          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows.map((row, i) => `
+            <tr class="${i % 2 === 0 ? 'even' : 'odd'}">
+              ${row.map(cell => `<td>${cell}</td>`).join('')}
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('resultadoEmpty').style.display = 'none';
+  document.getElementById('resultadoModern').style.display = 'block';
+  atualizarEstadoVazio();
+}
+
+async function exportarCSV() {
+  if (!modoAgregado && camposSelecionados.length === 0) {
+    mostrarNotificacao('Selecione campos antes de exportar!', 'error');
+    return;
+  }
+  if (modoAgregado && zonas.linhas.length === 0 && zonas.valores.length === 0) {
+    mostrarNotificacao('No modo agregado, defina Linhas e Valores', 'error');
+    return;
+  }
+  
+  const dados = modoAgregado ? {
+    linhas: zonas.linhas,
+    valores: zonas.valores,
+    colunas: zonas.colunas,
+    filtros: filtrosAtivos,
+    formato: 'csv'
+  } : { campos: camposSelecionados, filtros: filtrosAtivos, formato: 'csv' };
+  
+  try {
+    const response = await fetch('/web/relatorios/gerar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(dados)
+    });
+    
+    if (!response.ok) throw new Error('Erro ao exportar CSV');
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `relatorio_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+    
+    mostrarNotificacao('CSV baixado com sucesso!', 'success');
+  } catch (error) {
+    mostrarNotificacao(`Erro: ${error.message}`, 'error');
+  }
+}
+
+function exibirResultadoAgregado(resultado) {
+  const stats = document.getElementById('resultadoStats');
+  const tabela = document.getElementById('tabelaResultado');
+
+  const numFiltros = Object.keys(filtrosAtivos).length;
+  stats.innerHTML = `
+    <div class="stats-modern">
+      <div class="stat-card"><div class="stat-number">${resultado.total}</div><div class="stat-label">Grupos</div></div>
+      <div class="stat-card"><div class="stat-number">${zonas.linhas.length}</div><div class="stat-label">Linhas</div></div>
+      <div class="stat-card"><div class="stat-number">${zonas.valores.length}</div><div class="stat-label">Métricas</div></div>
+      <div class="stat-card"><div class="stat-number">${numFiltros}</div><div class="stat-label">Filtros</div></div>
+    </div>
+  `;
+
+  if (!resultado.dados || resultado.dados.length === 0) {
+    tabela.innerHTML = `
+      <div class="no-data-modern">
+        <div class="no-data-icon">📭</div>
+        <h3>Nenhum resultado encontrado</h3>
+        <p>Tente ajustar os filtros ou selecionar diferentes campos</p>
+      </div>
+    `;
+    return;
+  }
+
+  const headers = [
+    ...zonas.linhas.map(c => c.label || c.field),
+    ...zonas.valores.map(v => `${(v.agg || 'count').toUpperCase()}(${v.label || v.field})`)
+  ];
+  const rows = resultado.dados.map(row => [
+    ...zonas.linhas.map(c => row[c.field] ?? '-'),
+    ...zonas.valores.map(v => {
+      const key = `${(v.agg || 'count').toLowerCase()}_${v.field}`;
+      const val = row[key];
+      return val ?? 0;
+    })
+  ]);
+
+  tabela.innerHTML = `
+    <div class="tabela-wrapper">
+      <table class="tabela-modern">
+        <thead>
+          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows.map((r,i) => `<tr class="${i%2===0?'even':'odd'}">${r.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('resultadoEmpty').style.display = 'none';
+  document.getElementById('resultadoModern').style.display = 'block';
+  atualizarEstadoVazio();
+}
+
+function exportarExcel() {
+  mostrarNotificacao('Funcionalidade em desenvolvimento!', 'info');
+}
+
+function imprimirRelatorio() {
+  const conteudo = document.getElementById('tabelaResultado').innerHTML;
+  const janela = window.open('', '_blank');
+  janela.document.write(`
+    <html>
+      <head>
+        <title>Relatório - Sistema de Estágios</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+          th { background-color: #f8f9fa; font-weight: bold; }
+          tr:nth-child(even) { background-color: #f8f9fa; }
+          .no-data-modern { text-align: center; padding: 40px; }
+          @media print { body { margin: 0; } }
+        </style>
+      </head>
+      <body>
+        <h1>Sistema de Estágios - Relatório Dinâmico</h1>
+        <p><strong>Gerado em:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+        <p><strong>Campos:</strong> ${camposSelecionados.map(c => c.label).join(', ')}</p>
+        ${conteudo}
+      </body>
+    </html>
+  `);
+  janela.document.close();
+  janela.print();
+}
+
+function compartilharRelatorio() {
+  mostrarNotificacao('Funcionalidade em desenvolvimento!', 'info');
+}
+
+function mostrarNotificacao(mensagem, tipo = 'info') {
+  // Remove notificação anterior se existir
+  const notifAnterior = document.querySelector('.notificacao-toast');
+  if (notifAnterior) notifAnterior.remove();
+  
+  const cores = {
+    success: '#10b981',
+    error: '#ef4444', 
+    warning: '#f59e0b',
+    info: '#3b82f6'
+  };
+  
+  const icones = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️', 
+    info: 'ℹ️'
+  };
+  
+  const toast = document.createElement('div');
+  toast.className = 'notificacao-toast';
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${cores[tipo]};
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    font-weight: 500;
+    animation: slideIn 0.3s ease;
+  `;
+  toast.innerHTML = `${icones[tipo]} ${mensagem}`;
+  
+  document.body.appendChild(toast);
+  
+  // Auto remover após 3 segundos
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// CSS para animações
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+
+// Exibe/oculta o painel de estado vazio conforme contexto
+function atualizarEstadoVazio() {
+  const empty = document.getElementById('resultadoEmpty');
+  const modern = document.getElementById('resultadoModern');
+  if (!empty || !modern) return;
+  const temSelecionados = modoAgregado
+    ? (zonas.linhas.length + zonas.valores.length + zonas.colunas.length) > 0
+    : camposSelecionados.length > 0;
+  // Se já há seleção ou resultado visível, oculta empty
+  if (temSelecionados || modern.style.display === 'block') {
+    empty.style.display = 'none';
+    document.body.style.overflow = '';
+  } else {
+    empty.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+</script>
+{% endblock %}

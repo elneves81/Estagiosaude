@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}Estágios{% endblock %}
+{% block content %}
+<h1>Estágios</h1>
+<section class="card">
+  <h2>Novo Estágio</h2>
+  {% if import_message %}
+    <div style="margin-bottom:10px;padding:8px 12px;border-radius:6px;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;">
+      {{ import_message }}
+    </div>
+  {% endif %}
+  <form method="post" action="/web/estagios" class="form-grid cols-4">
+    <label>Nome
+      <input type="text" name="nome" required />
+    </label>
+    <label>Email
+      <input type="email" name="email" required />
+    </label>
+    <label>Telefone
+      <input type="text" name="telefone" />
+    </label>
+    <label>Período
+      <input type="text" name="periodo" />
+    </label>
+    
+    <!-- Campos de Data e Horário -->
+    <label>Data Início
+      <input type="date" name="data_inicio" />
+    </label>
+    <label>Data Fim
+      <input type="date" name="data_fim" />
+    </label>
+    <label>Horário Início
+      <input type="time" name="horario_inicio" />
+    </label>
+    <label>Horário Fim
+      <input type="time" name="horario_fim" />
+    </label>
+    
+    <!-- Novos campos -->
+    <label>Carga Horária (h)
+      <input type="number" name="carga_horaria" step="0.5" placeholder="Ex: 40.0" />
+    </label>
+    <label>Status
+      <select name="status">
+        <option value="ativo">Ativo</option>
+        <option value="inativo">Inativo</option>
+        <option value="concluido">Concluído</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+    </label>
+    <label>Valor Total (R$)
+      <input type="number" name="valor_total" step="0.01" placeholder="Ex: 1500.00" />
+    </label>
+    <label>Território
+      <select name="territorio_id">
+        <option value="">Selecione...</option>
+        {% if territorios %}
+          {% for t in territorios %}
+            <option value="{{ t.id }}">{{ t.nome }}</option>
+          {% endfor %}
+        {% endif %}
+      </select>
+    </label>
+    
+    <label>Supervisor
+      <select name="supervisor_id">
+        <option value="">--</option>
+        {% for sup in supervisores %}
+          <option value="{{ sup.id }}">{{ sup.nome }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Instituição
+      <select name="instituicao_id">
+        <option value="">--</option>
+        {% for i in instituicoes %}
+          <option value="{{ i.id }}">{{ i.nome }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Curso
+      <select name="curso_id">
+        <option value="">--</option>
+        {% for c in cursos %}
+          <option value="{{ c.id }}">{{ c.nome }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Unidade
+      <select name="unidade_id">
+        <option value="">--</option>
+        {% for u in unidades %}
+          <option value="{{ u.id }}">{{ u.nome }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Disciplina
+      <input type="text" name="disciplina" />
+    </label>
+    <label>Nível
+      <input type="text" name="nivel" />
+    </label>
+    <label>Nº Estagiários
+      <input type="number" name="num_estagiarios" />
+    </label>
+    <label>Quantidade de Grupos
+      <input type="number" name="quantidade_grupos" min="1" value="1" />
+    </label>
+    <label class="col-span-4">Dias da Semana
+      <input type="text" name="dias_semana" placeholder="Ex: Segunda, Quarta, Sexta" />
+    </label>
+    <label class="col-span-4">Observações
+      <textarea name="observacoes" rows="3"></textarea>
+    </label>
+    <div class="col-span-4">
+      <button type="submit" class="btn-primary">Salvar</button>
+    </div>
+  </form>
+</section>
+<section class="card">
+  <h2>Lista</h2>
+  <form method="post" action="/web/estagios/import" enctype="multipart/form-data" style="margin-bottom:1rem;display:flex;gap:.5rem;align-items:center;">
+    <input type="file" name="file" accept=".csv,.xlsx" required />
+    <button class="btn-small" type="submit">Importar</button>
+  </form>
+  <table class="table">
+    <thead>
+      <tr>
+  <th>ID</th><th>Nome</th><th>Email</th><th>Período</th><th>Status</th><th>Supervisor</th><th>Instituição</th><th>Grupos</th><th>Dias</th><th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in estagios %}
+      <tr>
+        <td>{{ e.id }}</td>
+        <td>{{ e.nome }}</td>
+        <td>{{ e.email }}</td>
+        <td>
+          {% if e.data_inicio and e.data_fim %}
+            {{ e.data_inicio.strftime('%d/%m/%Y') }} - {{ e.data_fim.strftime('%d/%m/%Y') }}
+          {% else %}
+            {{ e.periodo or '-' }}
+          {% endif %}
+        </td>
+        <td>
+          <span class="status-badge status-{{ e.status or 'ativo' }}">
+            {{ (e.status or 'ativo').title() }}
+          </span>
+        </td>
+        <td>{{ e.supervisor.nome if e.supervisor else '' }}</td>
+  <td>{{ e.instituicao.nome if e.instituicao else '' }}</td>
+  <td>{{ e.quantidade_grupos or '-' }}</td>
+  <td>{{ e.dias_semana or '-' }}</td>
+        <td>
+          <a class="btn-small" style="background:#2563eb" href="/web/relatorios/anexo2/{{ e.id }}?format=html" target="_blank">Relatório</a>
+          <form method="post" action="/web/estagios/delete/{{ e.id }}" style="display:inline" onsubmit="return confirm('Excluir estágio {{ e.nome }}?');">
+            <button class="btn-small" style="background:#dc2626" type="submit">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<style>
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.status-ativo { background: #dcfce7; color: #166534; }
+.status-inativo { background: #fef3c7; color: #92400e; }
+.status-concluido { background: #dbeafe; color: #1e40af; }
+.status-cancelado { background: #fee2e2; color: #991b1b; }
+</style>
+{% endblock %}
