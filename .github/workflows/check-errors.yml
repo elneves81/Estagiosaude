@@ -11,6 +11,9 @@ on:
       - main
       - develop
 
+permissions:
+  contents: read
+
 jobs:
   check-errors:
     name: Verify Code Quality and Errors
