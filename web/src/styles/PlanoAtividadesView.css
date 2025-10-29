@@ -1,0 +1,53 @@
+/* PlanoAtividadesView: organização visual para inclusão rápida e ações compactas */
+
+/* Card base herdado da UI existente */
+.quick-add.stat-card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.quick-add-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.quick-add-error { margin-bottom: 10px; }
+
+.quick-add-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.quick-add-grid input[type="text"],
+.quick-add-grid input[type="number"],
+.quick-add-grid input[type="date"],
+.quick-add-grid input[list] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.quick-add-actions {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quick-add-hint {
+  margin-left: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+/* Ações compactas em células */
+.table-actions .btn-secondary { padding: 4px 6px; font-size: 12px; line-height: 1; }
+
+/* Responsivo: mais espaçamento em telas estreitas */
+@media (max-width: 640px) {
+  .quick-add-grid { grid-template-columns: 1fr; }
+}

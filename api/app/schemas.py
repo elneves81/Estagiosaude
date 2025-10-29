@@ -170,9 +170,9 @@ class EstagioBase(BaseModel):
     disciplina: Optional[str] = None
     nivel: Optional[str] = None
     num_estagiarios: Optional[int] = None
-    carga_horaria: Optional[str] = None
-    salario: Optional[str] = None
+    carga_horaria: Optional[int] = None
     observacoes: Optional[str] = None
+    salario: Optional[str] = None
 
     @field_validator('nome', 'periodo', 'disciplina', 'nivel', 'observacoes', mode='before')
     def _upper_estagio(cls, v):

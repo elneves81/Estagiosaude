@@ -15,6 +15,7 @@ import os
 from datetime import datetime, date, timedelta
 import re
 import io
+import contextlib
 import csv as csv_mod
 import logging
 import traceback
@@ -1015,6 +1016,61 @@ async def listar_vagas(
         "limit": limit,
         "offset": offset,
     }
+
+# ------------------------------
+# Manutenção (admin): deduplicações e limpezas
+# ------------------------------
+@app.post("/maintenance/run")
+async def maintenance_run(
+    payload: dict = Body(...),
+    current_user=Depends(require_roles('admin')),
+):
+    """Executa tarefas de manutenção administrativas.
+
+    Body esperado:
+      {
+        "action": "unidades_sem_cnes" | "unidades_cnes_dup" | "cursos_dup" | "instituicoes_dup",
+        "dry_run": true|false
+      }
+    """
+    action = (payload or {}).get("action")
+    dry_run = bool((payload or {}).get("dry_run", True))
+
+    if action not in {"unidades_sem_cnes", "unidades_cnes_dup", "cursos_dup", "instituicoes_dup"}:
+        raise HTTPException(status_code=400, detail="Ação inválida")
+
+    # Mapear ação -> função runner
+    def _runner(action_name: str):
+        if action_name == "unidades_sem_cnes":
+            from .remove_unidades_sem_cnes import run as r
+            return r
+        if action_name == "unidades_cnes_dup":
+            from .remove_unidades_cnes_duplicado import run as r
+            return r
+        if action_name == "cursos_dup":
+            from .remove_cursos_duplicados import run as r
+            return r
+        if action_name == "instituicoes_dup":
+            from .remove_instituicoes_duplicadas import run as r
+            return r
+        return None
+
+    fn = _runner(action)
+    if not fn:
+        raise HTTPException(status_code=400, detail="Ação não suportada")
+
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            # Executa a rotina (logs serão capturados)
+            fn(dry_run=dry_run)
+    except Exception as e:
+        # Ainda assim devolver log capturado e erro
+        log = buf.getvalue()
+        raise HTTPException(status_code=500, detail={"message": str(e), "log": log})
+
+    log = buf.getvalue()
+    return {"action": action, "dry_run": dry_run, "log": log}
 
 # Criar Estágio a partir de uma Vaga (atividade do Anexo II)
 @app.post("/vagas/{atividade_id}/criar-estagio", response_model=schemas.Estagio)

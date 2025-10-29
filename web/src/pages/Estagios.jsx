@@ -51,7 +51,7 @@ function Estagios() {
     unidade_id: '',
     disciplina: '',
     nivel: '',
-    carga_horaria: '',
+  carga_horaria: '',
     salario: '',
     num_estagiarios: '',
     observacoes: ''
@@ -185,7 +185,7 @@ function Estagios() {
       instituicao_id: formData.instituicao_id ? parseInt(formData.instituicao_id) : null,
       curso_id: formData.curso_id ? parseInt(formData.curso_id) : null,
       unidade_id: formData.unidade_id ? parseInt(formData.unidade_id) : null,
-      carga_horaria: formData.carga_horaria || null,
+  carga_horaria: formData.carga_horaria ? parseInt(formData.carga_horaria, 10) : null,
       salario: formData.salario || null,
       num_estagiarios: formData.num_estagiarios ? parseInt(formData.num_estagiarios) : null,
     }
@@ -250,7 +250,7 @@ function Estagios() {
       curso_id: editItem.curso_id ? parseInt(editItem.curso_id) : null,
       unidade_id: editItem.unidade_id ? parseInt(editItem.unidade_id) : null,
   disciplina: editItem.disciplina || null,
-  carga_horaria: editItem.carga_horaria || null,
+  carga_horaria: editItem.carga_horaria ? parseInt(editItem.carga_horaria, 10) : null,
   salario: editItem.salario || null,
       nivel: editItem.nivel || null,
       num_estagiarios: editItem.num_estagiarios ? parseInt(editItem.num_estagiarios) : null,
@@ -681,11 +681,14 @@ function Estagios() {
                   <small className="form-help">Quantos estagiários nesta mesma vaga</small>
                 </div>
                 <div className="form-group">
-                  <label>Carga Horária:</label>
+                  <label>Carga Horária (h/semana):</label>
                   <input
+                    type="number"
+                    min="0"
+                    step="1"
                     value={formData.carga_horaria}
-                    onChange={(e) => setFormData({...formData, carga_horaria: e.target.value})}
-                    placeholder="Ex: 20h/semana ou Integral"
+                    onChange={(e) => setFormData({...formData, carga_horaria: e.target.value.replace(/[^0-9]/g,'')})}
+                    placeholder="Ex: 20"
                   />
                 </div>
               </div>
@@ -999,8 +1002,8 @@ function Estagios() {
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label>Carga Horária</label>
-                <input value={editItem.carga_horaria||''} onChange={(e)=> setEditItem({...editItem, carga_horaria:e.target.value})} placeholder="Ex: 20h/semana" />
+                <label>Carga Horária (h/semana)</label>
+                <input type="number" min="0" step="1" value={editItem.carga_horaria||''} onChange={(e)=> setEditItem({...editItem, carga_horaria:e.target.value.replace(/[^0-9]/g,'')})} placeholder="Ex: 20" />
               </div>
               <div className="form-group">
                 <label>Salário (R$)</label>

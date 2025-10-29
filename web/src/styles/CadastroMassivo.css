@@ -1,0 +1,373 @@
+/* Estilos para a página de cadastro massivo */
+
+.page-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.page-header h1 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  color: #7f8c8d;
+  font-size: 1.1rem;
+}
+
+/* Tabs do cadastro massivo */
+.cadastro-massivo-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #dee2e6;
+  background: white;
+  color: #6c757d;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.tab-button:hover {
+  border-color: #007bff;
+  color: #007bff;
+  background: #f8f9ff;
+  transform: translateY(-1px);
+}
+
+.tab-button.active {
+  background: #007bff;
+  color: white;
+  border-color: #0056b3;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+/* Container principal do cadastro */
+.cadastro-massivo-container {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Header do formulário */
+.cadastro-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.cadastro-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Grid de campos */
+.cadastro-grid {
+  display: grid;
+  gap: 0;
+}
+
+.cadastro-grid-wide {
+  display: grid;
+  gap: 0;
+  overflow-x: auto;
+}
+
+.grid-header {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1.5fr 1.5fr 80px;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.grid-header-wide {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 2fr 1.5fr 1.5fr 1.5fr 1.2fr 1.2fr 80px 80px;
+  gap: 0.8rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  min-width: 1200px;
+}
+
+.grid-row {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1.5fr 1.5fr 80px;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid #f1f3f4;
+  align-items: center;
+}
+
+.grid-row-wide {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 2fr 1.5fr 1.5fr 1.5fr 1.2fr 1.2fr 80px 80px;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-bottom: 1px solid #f1f3f4;
+  align-items: center;
+  min-width: 1200px;
+}
+
+.grid-row:nth-child(even) {
+  background: #fafbfc;
+}
+
+.grid-row-wide:nth-child(even) {
+  background: #fafbfc;
+}
+
+.grid-row:hover,
+.grid-row-wide:hover {
+  background: #e3f2fd;
+}
+
+/* Campos de entrada */
+.grid-row input,
+.grid-row select,
+.grid-row-wide input,
+.grid-row-wide select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 2px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.grid-row input:focus,
+.grid-row select:focus,
+.grid-row-wide input:focus,
+.grid-row-wide select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.grid-row input::placeholder,
+.grid-row-wide input::placeholder {
+  color: #adb5bd;
+  font-style: italic;
+}
+
+/* Botões */
+.btn-primary {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 auto;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #20c997, #17a2b8);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-success:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-small {
+  padding: 0.4rem 0.6rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+  transform: scale(1.05);
+}
+
+.btn-danger:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Ações do cadastro */
+.cadastro-actions {
+  padding: 2rem;
+  text-align: center;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Alertas */
+.alert {
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 1.2rem;
+  color: #6c757d;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .cadastro-massivo-tabs {
+    flex-direction: column;
+  }
+  
+  .tab-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .cadastro-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .grid-header,
+  .grid-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .grid-header-wide,
+  .grid-row-wide {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.5rem;
+  }
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab-content > div {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Melhorias visuais */
+.cadastro-massivo-container {
+  margin-bottom: 2rem;
+}
+
+.grid-row input[type="date"] {
+  font-family: monospace;
+}
+
+.grid-row input[type="number"] {
+  text-align: center;
+}
+
+/* Scroll personalizado para grid wide */
+.cadastro-grid-wide::-webkit-scrollbar {
+  height: 8px;
+}
+
+.cadastro-grid-wide::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.cadastro-grid-wide::-webkit-scrollbar-thumb {
+  background: #007bff;
+  border-radius: 4px;
+}
+
+.cadastro-grid-wide::-webkit-scrollbar-thumb:hover {
+  background: #0056b3;
+}
